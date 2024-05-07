@@ -1,4 +1,4 @@
-# this is a copy site of the hornsrev site file. I may edit this to test things
+# this is a copy site of the hornsrev site file editted to blow wind only from the north
 from py_wake import np
 from py_wake.site._site import UniformWeibullSite
 from py_wake.wind_turbines import WindTurbine
@@ -94,10 +94,10 @@ class V80(WindTurbine):
 HornsrevV80 = V80
 
 
-class MySite(UniformWeibullSite):
+class NorthMySite(UniformWeibullSite):
     def __init__(self, ti=.1, shear=None):
-        f = [3.597152, 3.948682, 5.167395, 7.000154, 8.364547, 6.43485,
-             8.643194, 11.77051, 15.15757, 14.73792, 10.01205, 5.165975]
+        f = [1, 0, 0, 0, 0, 0,
+             0, 0, 0, 0, 0, 0]
         a = [9.176929, 9.782334, 9.531809, 9.909545, 10.04269, 9.593921,
              9.584007, 10.51499, 11.39895, 11.68746, 11.63732, 10.08803]
         k = [2.392578, 2.447266, 2.412109, 2.591797, 2.755859, 2.595703,
