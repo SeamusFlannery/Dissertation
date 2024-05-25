@@ -1,58 +1,80 @@
 # this is a copy site of the hornsrev site file. I may edit this to test things
+import random
 from py_wake import np
+from matplotlib import pyplot as plt
+import math
+from py_wake.wind_farm_models import PropagateDownwind
+from py_wake import deficit_models as dm
 from py_wake.site._site import UniformWeibullSite
 from py_wake.wind_turbines import WindTurbine
 from py_wake.wind_turbines.power_ct_functions import PowerCtTabular
 
-wt_x = [423974, 424042, 424111, 424179, 424247, 424315, 424384, 424452, 424534,
-        424602, 424671, 424739, 424807, 424875, 424944, 425012, 425094, 425162,
-        425231, 425299, 425367, 425435, 425504, 425572, 425654, 425722, 425791,
-        425859, 425927, 425995, 426064, 426132, 426214, 426282, 426351, 426419,
-        426487, 426555, 426624, 426692, 426774, 426842, 426911, 426979, 427047,
-        427115, 427184, 427252, 427334, 427402, 427471, 427539, 427607, 427675,
-        427744, 427812, 427894, 427962, 428031, 428099, 428167, 428235, 428304,
-        428372, 428454, 428522, 428591, 428659, 428727, 428795, 428864, 428932,
-        429014, 429082, 429151, 429219, 429287, 429355, 429424, 429492]
-wt_y = [6151447, 6150891, 6150335, 6149779, 6149224, 6148668, 6148112, 6147556,
-        6151447, 6150891, 6150335, 6149779, 6149224, 6148668, 6148112, 6147556,
-        6151447, 6150891, 6150335, 6149779, 6149224, 6148668, 6148112, 6147556,
-        6151447, 6150891, 6150335, 6149779, 6149224, 6148668, 6148112, 6147556,
-        6151447, 6150891, 6150335, 6149779, 6149224, 6148668, 6148112, 6147556,
-        6151447, 6150891, 6150335, 6149779, 6149224, 6148668, 6148112, 6147556,
-        6151447, 6150891, 6150335, 6149779, 6149224, 6148668, 6148112, 6147556,
-        6151447, 6150891, 6150335, 6149779, 6149224, 6148668, 6148112, 6147556,
-        6151447, 6150891, 6150335, 6149779, 6149224, 6148668, 6148112, 6147556,
-        6151447, 6150891, 6150335, 6149779, 6149224, 6148668, 6148112, 6147556]
-wt9_x = np.array(wt_x)[[0, 1, 2, 8, 9, 10, 16, 17, 18]]
-wt9_y = np.array(wt_y)[[0, 1, 2, 8, 9, 10, 16, 17, 18]]
-i16 = [0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 24, 25, 26, 27]
-wt16_x = np.array(wt_x)[i16]
-wt16_y = np.array(wt_y)[i16]
+
+class V80(WindTurbine):
+    def __init__(self, method='linear'):
+        """
+        Parameters
+        ----------
+        method : {'linear', 'pchip'}
+            linear(fast) or pchip(smooth and gradient friendly) interpolation
+        """
+        WindTurbine.__init__(self, name='V80', diameter=80, hub_height=70,
+                             powerCtFunction=PowerCtTabular(power_curve[:, 0], power_curve[:, 1], 'w',
+                                                            ct_curve[:, 1], method=method))
 
 
-power_curve = np.array([[3.0, 0.0],
-                        [4.0, 66.6],
-                        [5.0, 154.0],
-                        [6.0, 282.0],
-                        [7.0, 460.0],
-                        [8.0, 696.0],
-                        [9.0, 996.0],
-                        [10.0, 1341.0],
-                        [11.0, 1661.0],
-                        [12.0, 1866.0],
-                        [13.0, 1958.0],
-                        [14.0, 1988.0],
-                        [15.0, 1997.0],
-                        [16.0, 1999.0],
-                        [17.0, 2000.0],
-                        [18.0, 2000.0],
-                        [19.0, 2000.0],
-                        [20.0, 2000.0],
-                        [21.0, 2000.0],
-                        [22.0, 2000.0],
-                        [23.0, 2000.0],
-                        [24.0, 2000.0],
-                        [25.0, 2000.0]]) * [1, 1000]
+class Turbine_instance:
+    def __init__(self, x, y):
+        self.origin_x = x
+        self.origin_y = y
+        self.pos = [self.origin_x, self.origin_y]
+
+    def random_move(self, radius):
+        # generate random, even distributed point in polar coordinates
+        theta = 2 * math.pi * random.random()
+        r = radius * math.sqrt(random.random())
+        # convert to cartesian
+        x = r * math.cos(theta) + self.origin_x
+        y = r * math.sin(theta) + self.origin_y
+        self.pos = [x, y]
+
+
+class WindFarm:
+    def __init__(self, turbine_list):
+        self.turbines = turbine_list
+        self.wt_x, self.wt_y = [], []
+        for i, turbine in enumerate(turbine_list):
+            self.wt_x.append(turbine.pos[0])
+            self.wt_y.append(turbine.pos[1])
+
+    def random_move(self, radius):
+        for i, turbine in enumerate(self.turbines):
+            turbine.random_move(radius)
+            self.wt_x[i], self.wt_y[i] = turbine.pos
+
+
+t_1 = Turbine_instance(0, 0)
+t_2 = Turbine_instance(0, 500)
+t_3 = Turbine_instance(0, 1000)
+t_4 = Turbine_instance(500, 0)
+t_5 = Turbine_instance(500, 500)
+t_6 = Turbine_instance(500, 1000)
+t_7 = Turbine_instance(1000, 0)
+t_8 = Turbine_instance(1000, 500)
+t_9 = Turbine_instance(1000, 1000)
+turbine_list = [t_1, t_2, t_3, t_4, t_5, t_6, t_7, t_8, t_9]
+simple_farm = WindFarm(turbine_list)
+wt_x, wt_y = simple_farm.wt_x, simple_farm.wt_y
+print(simple_farm.wt_x, simple_farm.wt_y)
+# simple_farm.random_move(100)
+# print(simple_farm.wt_x, simple_farm.wt_y)
+
+
+power_curve = np.array(
+    [[3.0, 0.0], [4.0, 66.6], [5.0, 154.0], [6.0, 282.0], [7.0, 460.0], [8.0, 696.0], [9.0, 996.0], [10.0, 1341.0],
+     [11.0, 1661.0], [12.0, 1866.0], [13.0, 1958.0], [14.0, 1988.0], [15.0, 1997.0], [16.0, 1999.0], [17.0, 2000.0],
+     [18.0, 2000.0], [19.0, 2000.0], [20.0, 2000.0], [21.0, 2000.0], [22.0, 2000.0], [23.0, 2000.0], [24.0, 2000.0],
+     [25.0, 2000.0]]) * [1, 1000]
 ct_curve = np.array([[3.0, 0.0],
                      [4.0, 0.818],
                      [5.0, 0.806],
@@ -78,22 +100,6 @@ ct_curve = np.array([[3.0, 0.0],
                      [25.0, 0.053]])
 
 
-class V80(WindTurbine):
-    def __init__(self, method='linear'):
-        """
-        Parameters
-        ----------
-        method : {'linear', 'pchip'}
-            linear(fast) or pchip(smooth and gradient friendly) interpolation
-        """
-        WindTurbine.__init__(self, name='V80', diameter=80, hub_height=70,
-                             powerCtFunction=PowerCtTabular(power_curve[:, 0], power_curve[:, 1], 'w',
-                                                            ct_curve[:, 1], method=method))
-
-
-HornsrevV80 = V80
-
-
 class MySite(UniformWeibullSite):
     def __init__(self, ti=.1, shear=None):
         f = [3.597152, 3.948682, 5.167395, 7.000154, 8.364547, 6.43485,
@@ -106,12 +112,36 @@ class MySite(UniformWeibullSite):
         self.initial_position = np.array([wt_x, wt_y]).T
 
 
+def test_random(farm, turbine, rad_range=1000, iterations=100):
+    radius_list = np.linspace(0, rad_range, int(rad_range/10+1))
+    Sim = PropagateDownwind(MySite(), turbine, wake_deficitModel=dm.NOJDeficit())
+    # run the simulation for Annual Energy Production (AEP)
+    simulationResult = Sim(farm.wt_x, farm.wt_y)
+    AEP = float(simulationResult.aep(normalize_probabilities=True).sum())
+    results = np.zeros(int(rad_range/10+1))
+    conf_ints = np.zeros(int(rad_range/10+1))
+    for i, rad in enumerate(radius_list):
+        prod_list = []
+        for j in range(iterations):
+            farm.random_move(rad)
+            prod_list.append(float(Sim(farm.wt_x, farm.wt_y).aep(normalize_probabilities=True).sum()))
+        avg = np.average(prod_list)
+        stdv = np.std(prod_list)
+        conf_int = 1.96 * stdv / np.sqrt(len(prod_list))
+        results[i] = avg
+        conf_ints[i] = conf_int
+    plt.plot(radius_list, results)
+    plt.plot(radius_list, np.add(results, conf_ints))
+    plt.plot(radius_list, np.add(results, -1*conf_ints))
+    # plt.plot(radius_list, AEP)
+    plt.show()
+
+
 def main():
     wt = V80()
     print('Diameter', wt.diameter())
     print('Hub height', wt.hub_height())
-
-    import matplotlib.pyplot as plt
+    test_random(simple_farm, wt)
     ws = np.linspace(3, 20, 100)
     plt.plot(ws, wt.power(ws) * 1e-3, label='Power')
     c = plt.plot([], [], label='Ct')[0].get_color()
@@ -124,5 +154,4 @@ def main():
     plt.show()
 
 
-if __name__ == '__main__':
-    main()
+main()

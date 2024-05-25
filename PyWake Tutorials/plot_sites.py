@@ -4,7 +4,7 @@ import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
 from py_wake import NOJ
-from my_site import wt_x, wt_y, MySite, V80
+from my_site import MySite, V80, simple_farm
 from North_Wind import NorthMySite
 from py_wake.utils import weibull
 from numpy import newaxis as na
@@ -16,11 +16,12 @@ from py_wake import deficit_models as dm
 # here we import the turbine, site and wake deficit model to use.
 windTurbines = V80()
 Sim = All2AllIterative(MySite(), windTurbines, wake_deficitModel=dm.NOJDeficit())
-
+wt_x, wt_y = simple_farm.wt_x, simple_farm.wt_y
 # run the simulation for Annual Energy Production (AEP)
 simulationResult = Sim(wt_x, wt_y)
 AEP = simulationResult.aep(normalize_probabilities=True)
 print("Total AEP: %f GWh" % AEP.sum())
+
 
 # plot the results
 # plt.figure()
