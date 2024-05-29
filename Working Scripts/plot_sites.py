@@ -4,7 +4,7 @@ import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
 from py_wake import NOJ
-from my_site import MySite, V80, simple_farm
+from Stationholding import MySite, V80, simple_farm
 from North_Wind import NorthMySite
 from py_wake.utils import weibull
 from numpy import newaxis as na
