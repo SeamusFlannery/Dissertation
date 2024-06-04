@@ -1,4 +1,5 @@
 # this is a copy site of the hornsrev site file. I may edit this to test things
+import copy
 import random
 from py_wake import np
 from matplotlib import pyplot as plt
@@ -108,19 +109,21 @@ class EastBlowHornsrevSite(UniformWeibullSite):
              2.583984, 2.548828, 2.470703, 2.607422, 2.626953, 2.326172]
         UniformWeibullSite.__init__(self, np.array(f) / np.sum(f), a, k, ti=ti, shear=shear)
         self.initial_position = np.array([wt_x, wt_y]).T
-        self.plot_wd_distribution(n_wd=12, ws_bins=[0, 5, 10, 15, 20, 25])
+        # to plot windrose, un-comment below
+        # self.plot_wd_distribution(n_wd=12, ws_bins=[0, 5, 10, 15, 20, 25])
 
 
 class MySite(UniformWeibullSite):
     def __init__(self, ti=.1, shear=None):
-        f = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        f = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         a = [9.176929, 9.782334, 9.531809, 9.909545, 10.04269, 9.593921,
              9.584007, 10.51499, 11.39895, 11.68746, 11.63732, 10.08803]
         k = [2.392578, 2.447266, 2.412109, 2.591797, 2.755859, 2.595703,
              2.583984, 2.548828, 2.470703, 2.607422, 2.626953, 2.326172]
         UniformWeibullSite.__init__(self, np.array(f) / np.sum(f), a, k, ti=ti, shear=shear)
         self.initial_position = np.array([wt_x, wt_y]).T
-        self.plot_wd_distribution(n_wd=12, ws_bins=[0, 5, 10, 15, 20, 25])
+        # to plot windrose, un-comment below
+        # self.plot_wd_distribution(n_wd=12, ws_bins=[0, 5, 10, 15, 20, 25])
 
 
 def generate_layout(y, y_spacing, x, x_spacing, shift, heading_deg=0):
@@ -153,7 +156,7 @@ def test_random(farm, turbine, rad_range=1000, iterations=100, granularity=10, p
     Sim = PropagateDownwind(MySite(), turbine, wake_deficitModel=dm.NOJDeficit())
     # run the simulation for Annual Energy Production (AEP)
     simulationResult = Sim(farm.wt_x, farm.wt_y)
-    AEP = float(simulationResult.aep(normalize_probabilities=True).sum())
+    AEP = float(simulationResult.aep(normalize_probabilities=False).sum())
     results = np.zeros(int(rad_range / granularity + 1))
     conf_ints = np.zeros(int(rad_range / granularity + 1))
     for i, rad in enumerate(radius_list):
@@ -161,7 +164,7 @@ def test_random(farm, turbine, rad_range=1000, iterations=100, granularity=10, p
         for j in range(iterations):
             farm.random_move(rad)
             simulation = Sim(farm.wt_x, farm.wt_y)
-            prod_list.append(float(simulation.aep(normalize_probabilities=True).sum()))
+            prod_list.append(float(simulation.aep(normalize_probabilities=False).sum()))
         avg = np.average(prod_list)
         stdv = np.std(prod_list)
         conf_int = 1.96 * stdv / np.sqrt(len(prod_list))
@@ -197,11 +200,12 @@ def test_perp_slide(farm, turbine, wind_direction=0, slide_range=100, granularit
     for i, rad in enumerate(radius_list):
         farm.perp_slide(rad, wind_direction)
         simulation = Sim(farm.wt_x, farm.wt_y)
+        mapsim = Sim(farm.wt_x, farm.wt_y)
         results[i] = float(simulation.aep(normalize_probabilities=True).sum())
         if plot and i % 10 == 0:
             wind_speed = 10
-            wind_direction = 0
-            flow_map = simulation.flow_map(ws=wind_speed, wd=wind_direction)
+            wind_direction = 30  ## TODO why is this value affecting AEP?!?!?!?!
+            flow_map = mapsim.flow_map(ws=wind_speed, wd=wind_direction)
             plt.figure()
             flow_map.plot_wake_map()
             plt.xlabel('x [m]')
@@ -223,9 +227,9 @@ def main():
     # test_random(simple_farm, wt, rad_range=50, iterations=1000, granularity=1, plot=True)
     # test_perp_slide(simple_farm, wt, slide_range=500, granularity=10)
     # print(generate_layout(3, 500, 3, 500, 0))
-    TenFarm = WindFarm(generate_layout(10, 500, 10, 500, 0))
+    TenFarm = WindFarm(generate_layout(10, 500, 10, 500, 150))
     # RotTenFarm = WindFarm(generate_layout(10, 500, 10, 500, 0, heading_deg=45), heading=45)
-    test_perp_slide(TenFarm, wt, slide_range=200, granularity=10, plot=True)
+    test_perp_slide(TenFarm, wt, slide_range=200, granularity=10)
     # test_perp_slide(RotTenFarm, wt, slide_range=100, granularity=10, plot=True)
     # plot_p_ct()
 
