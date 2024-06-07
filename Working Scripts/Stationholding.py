@@ -9,7 +9,7 @@ from py_wake import deficit_models as dm
 from py_wake.site._site import UniformWeibullSite
 from py_wake.wind_turbines import WindTurbine
 from py_wake.wind_turbines.power_ct_functions import PowerCtTabular
-from p_ct_curves import V80ct_curve, V80power_curve
+from p_ct_curves import V80ct_curve, V80power_curve, NREL15power_curve, NREL15ct_curve
 
 
 class V80(WindTurbine):
@@ -23,6 +23,14 @@ class V80(WindTurbine):
         WindTurbine.__init__(self, name='V80', diameter=80, hub_height=70,
                              powerCtFunction=PowerCtTabular(V80power_curve[:, 0], V80power_curve[:, 1], 'w',
                                                             V80ct_curve[:, 1], method=method))
+
+
+# [1] E. Gaertner et al., “Definition of the IEA Wind 15-Megawatt Offshore Reference Wind Turbine,” NREL/TP-5000-75698, Mar. 2020. [Online]. Available: https://www.nrel.gov/docs/fy20osti/75698.pdf
+class NREL15(WindTurbine):
+    def __init__(self, method='linear'):
+        WindTurbine.__init__(self, name='NREL15', diameter=240, hub_height=150,
+                             powerCtFunction=PowerCtTabular(NREL15power_curve[:, 0], NREL15power_curve[:, 1], 'w',
+                                                            NREL15ct_curve[:, 1], method=method))
 
 
 class Turbine_instance:
@@ -84,19 +92,19 @@ def plot_p_ct():
     plt.show()
 
 
-t_1 = Turbine_instance(0, 1000)
-t_2 = Turbine_instance(500, 1000)
-t_3 = Turbine_instance(1000, 1000)
-t_4 = Turbine_instance(0, 500)
-t_5 = Turbine_instance(500, 500)
-t_6 = Turbine_instance(1000, 500)
-t_7 = Turbine_instance(0, 0)
-t_8 = Turbine_instance(500, 0)
-t_9 = Turbine_instance(1000, 0)
-turbine_list = [t_1, t_2, t_3, t_4, t_5, t_6, t_7, t_8, t_9]
-simple_farm = WindFarm(turbine_list)
-wt_x, wt_y = simple_farm.wt_x, simple_farm.wt_y
-print(simple_farm.wt_x, simple_farm.wt_y)
+def simple_farm_maker():
+    t_1 = Turbine_instance(0, 1000)
+    t_2 = Turbine_instance(500, 1000)
+    t_3 = Turbine_instance(1000, 1000)
+    t_4 = Turbine_instance(0, 500)
+    t_5 = Turbine_instance(500, 500)
+    t_6 = Turbine_instance(1000, 500)
+    t_7 = Turbine_instance(0, 0)
+    t_8 = Turbine_instance(500, 0)
+    t_9 = Turbine_instance(1000, 0)
+    turbine_list = [t_1, t_2, t_3, t_4, t_5, t_6, t_7, t_8, t_9]
+    simple_farm = WindFarm(turbine_list)
+    return simple_farm
 
 
 class EastBlowHornsrevSite(UniformWeibullSite):
@@ -108,22 +116,21 @@ class EastBlowHornsrevSite(UniformWeibullSite):
         k = [2.392578, 2.447266, 2.412109, 2.591797, 2.755859, 2.595703,
              2.583984, 2.548828, 2.470703, 2.607422, 2.626953, 2.326172]
         UniformWeibullSite.__init__(self, np.array(f) / np.sum(f), a, k, ti=ti, shear=shear)
-        self.initial_position = np.array([wt_x, wt_y]).T
         # to plot windrose, un-comment below
         # self.plot_wd_distribution(n_wd=12, ws_bins=[0, 5, 10, 15, 20, 25])
 
 
 class MySite(UniformWeibullSite):
     def __init__(self, ti=.1, shear=None):
-        f = [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        f = [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0]
         a = [9.176929, 9.782334, 9.531809, 9.909545, 10.04269, 9.593921,
              9.584007, 10.51499, 11.39895, 11.68746, 11.63732, 10.08803]
         k = [2.392578, 2.447266, 2.412109, 2.591797, 2.755859, 2.595703,
              2.583984, 2.548828, 2.470703, 2.607422, 2.626953, 2.326172]
         UniformWeibullSite.__init__(self, np.array(f) / np.sum(f), a, k, ti=ti, shear=shear)
-        self.initial_position = np.array([wt_x, wt_y]).T
         # to plot windrose, un-comment below
-        # self.plot_wd_distribution(n_wd=12, ws_bins=[0, 5, 10, 15, 20, 25])
+        self.plot_wd_distribution(n_wd=12, ws_bins=[0, 5, 10, 15, 20, 25])
+        plt.show()
 
 
 def generate_layout(y, y_spacing, x, x_spacing, shift, heading_deg=0):
@@ -221,17 +228,23 @@ def test_perp_slide(farm, turbine, wind_direction=0, slide_range=100, granularit
 
 
 def main():
-    wt = V80()
-    print('Diameter', wt.diameter())
-    print('Hub height', wt.hub_height())
+    # wt = V80()
+    # print('Diameter', wt.diameter())
+    # print('Hub height', wt.hub_height())
     # test_random(simple_farm, wt, rad_range=50, iterations=1000, granularity=1, plot=True)
     # test_perp_slide(simple_farm, wt, slide_range=500, granularity=10)
     # print(generate_layout(3, 500, 3, 500, 0))
-    TenFarm = WindFarm(generate_layout(10, 500, 10, 500, 150))
+    # TenFarm = WindFarm(generate_layout(10, 500, 10, 500, 150))
     # RotTenFarm = WindFarm(generate_layout(10, 500, 10, 500, 0, heading_deg=45), heading=45)
-    test_perp_slide(TenFarm, wt, slide_range=200, granularity=10)
+    # test_perp_slide(TenFarm, wt, slide_range=200, granularity=10)
+    wt = NREL15()
+    print('Diameter', wt.diameter())
+    print('Hub height', wt.hub_height())
+    TenXNRELFarm = WindFarm(generate_layout(10, wt.diameter()*5, 10, wt.diameter()*7, 0))
+    test_perp_slide(TenXNRELFarm, wt, slide_range=wt.diameter()*2, granularity=wt.diameter()*0.1)
     # test_perp_slide(RotTenFarm, wt, slide_range=100, granularity=10, plot=True)
     # plot_p_ct()
 
 
-main()
+if __name__ == '__main__':
+    main()

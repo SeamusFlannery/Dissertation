@@ -12,3 +12,8 @@ V80ct_curve = np.array(
      [11.0, 0.739], [12.0, 0.709], [13.0, 0.409], [14.0, 0.314], [15.0, 0.249], [16.0, 0.202], [17.0, 0.167],
      [18.0, 0.14], [19.0, 0.119], [20.0, 0.102], [21.0, 0.088], [22.0, 0.077], [23.0, 0.067], [24.0, 0.06],
      [25.0, 0.053]])
+
+# “turbine-models/Offshore/IEA_15MW_240_RWT.csv at master · NREL/turbine-models,” GitHub. Accessed: Jun. 07, 2024. [Online]. Available: https://github.com/NREL/turbine-models/blob/master/Offshore/IEA_15MW_240_RWT.csv
+NREL15power_curve = np.loadtxt("IEA_15MW_240_RWT.csv", delimiter=',', skiprows=1, usecols=[0,1])
+NREL15ct_curve = np.loadtxt("IEA_15MW_240_RWT.csv", delimiter=',', skiprows=1, usecols=[0,4])
+

@@ -5,6 +5,9 @@ from py_wake.examples.data import example_data_path
 from py_wake.wind_turbines.power_ct_functions import PowerCtFunctionList, PowerCtTabular
 from py_wake.examples.data.hornsrev1 import Hornsrev1Site, V80
 from py_wake.utils.plotting import setup_plot
+from Stationholding import generate_layout, WindFarm, Turbine_instance, MySite
+from py_wake.wind_farm_models import PropagateDownwind
+from py_wake import deficit_models as dm
 
 windTurbines = V80()
 
@@ -34,8 +37,20 @@ u = np.arange(3, 26)
 for op in [0, 1]:
     plt.plot(u, windTurbines.power(u, operating=op) / 1000, label=f'Operating={op}')
 setup_plot(xlabel='Wind speed [m/s]', ylabel='Power [kW]')
-plt.show()
-
+# plt.show()
+farm_ex = WindFarm(generate_layout(10, 500, 10, 500, 0))
 # Make time-dependent operating variable
-operating = np.ones((len(x), len(time_stamp)))  # shape=(#wt, #time stamps)
+operating = np.ones((len(farm_ex.turbines), len(time_stamp)))  # shape=(#wt, #time stamps)
 operating[0, (time_stamp > 15) & (time_stamp < 20)] = 0  # wt0 not operating from day 5 to 15
+
+# setup new WindFarmModel with site containing time-dependent TI and run simulation
+wf_model = PropagateDownwind(MySite(), windTurbines, wake_deficitModel=dm.NOJDeficit())
+
+sim_res_time = wf_model(farm_ex.wt_x, farm_ex.wt_y,  # wind turbine positions
+                        wd=wd,  # Wind direction time series
+                        ws=ws,  # Wind speed time series
+                        time=time_stamp,  # time stamps
+                        TI=ti,  # turbulence intensity time series
+                        operating=operating  # time dependent operating variable
+                        )
+print(float(sim_res_time.aep().sum()))
