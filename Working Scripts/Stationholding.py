@@ -122,15 +122,15 @@ class EastBlowHornsrevSite(UniformWeibullSite):
 
 class MySite(UniformWeibullSite):
     def __init__(self, ti=.1, shear=None):
-        f = [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0]
+        f = [1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0]
         a = [9.176929, 9.782334, 9.531809, 9.909545, 10.04269, 9.593921,
              9.584007, 10.51499, 11.39895, 11.68746, 11.63732, 10.08803]
         k = [2.392578, 2.447266, 2.412109, 2.591797, 2.755859, 2.595703,
              2.583984, 2.548828, 2.470703, 2.607422, 2.626953, 2.326172]
         UniformWeibullSite.__init__(self, np.array(f) / np.sum(f), a, k, ti=ti, shear=shear)
         # to plot windrose, un-comment below
-        self.plot_wd_distribution(n_wd=12, ws_bins=[0, 5, 10, 15, 20, 25])
-        plt.show()
+        # self.plot_wd_distribution(n_wd=12, ws_bins=[0, 5, 10, 15, 20, 25])
+        # plt.show()
 
 
 def generate_layout(y, y_spacing, x, x_spacing, shift, heading_deg=0):
@@ -221,6 +221,8 @@ def test_perp_slide(farm, turbine, wind_direction=0, slide_range=100, granularit
             plt.title('Wake map for' + f' {wind_speed} m/s, {wind_direction} deg, {rad} m stationholding radius')
             plt.show()
     plt.plot(radius_list, results)
+    print("max aep: " + str(results.max()) + " GWh")
+    print("max aep at shift: " + str(radius_list[results.argmax()]) + " m")
     plt.xlabel("slide (m)")
     plt.ylabel("AEP (GWh)")
     plt.title("Annual Energy Production Vs. Wind-perpendicular Slide Tolerance")
@@ -240,11 +242,13 @@ def main():
     wt = NREL15()
     print('Diameter', wt.diameter())
     print('Hub height', wt.hub_height())
-    TenXNRELFarm = WindFarm(generate_layout(10, wt.diameter()*5, 10, wt.diameter()*7, 0))
-    test_perp_slide(TenXNRELFarm, wt, slide_range=wt.diameter()*2, granularity=wt.diameter()*0.1)
+    TenXNRELFarm = WindFarm(generate_layout(10, wt.diameter()*5, 10, wt.diameter()*7, 590))
+    test_perp_slide(TenXNRELFarm, wt, slide_range=wt.diameter()*4, granularity=wt.diameter()*0.1)
     # test_perp_slide(RotTenFarm, wt, slide_range=100, granularity=10, plot=True)
     # plot_p_ct()
 
+# TODO write a new function that automatically optimizes the initial farm slide according to bifurcated wind,
+# TODO and then tests in trifurcated wind
 
 if __name__ == '__main__':
     main()
