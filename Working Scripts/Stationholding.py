@@ -196,10 +196,10 @@ def test_random(farm, turbine, rad_range=1000, iterations=100, granularity=10, p
     plt.show()
 
 
-def test_perp_slide(farm, turbine, wind_direction=0, slide_range=100, granularity=10, plot=False):
+def test_perp_slide(site, farm, turbine, wind_direction=0, slide_range=100, granularity=10, plot=True, flow_plot=False):
     farm_heading = farm.heading
     radius_list = np.linspace(0, slide_range, int(slide_range / granularity + 1))
-    Sim = PropagateDownwind(MySite(), turbine, wake_deficitModel=dm.NOJDeficit())
+    Sim = PropagateDownwind(site, turbine, wake_deficitModel=dm.NOJDeficit())
     # run the simulation for Annual Energy Production (AEP)
     simulationResult = Sim(farm.wt_x, farm.wt_y)
     AEP = float(simulationResult.aep(normalize_probabilities=True).sum())
@@ -209,7 +209,7 @@ def test_perp_slide(farm, turbine, wind_direction=0, slide_range=100, granularit
         simulation = Sim(farm.wt_x, farm.wt_y)
         mapsim = Sim(farm.wt_x, farm.wt_y)
         results[i] = float(simulation.aep(normalize_probabilities=True).sum())
-        if plot and i % 10 == 0:
+        if flow_plot and i % 10 == 0:
             wind_speed = 10
             wind_direction = 30  ## TODO why is this value affecting AEP?!?!?!?!
             flow_map = mapsim.flow_map(ws=wind_speed, wd=wind_direction)
@@ -220,13 +220,35 @@ def test_perp_slide(farm, turbine, wind_direction=0, slide_range=100, granularit
             plt.grid()
             plt.title('Wake map for' + f' {wind_speed} m/s, {wind_direction} deg, {rad} m stationholding radius')
             plt.show()
-    plt.plot(radius_list, results)
-    print("max aep: " + str(results.max()) + " GWh")
-    print("max aep at shift: " + str(radius_list[results.argmax()]) + " m")
-    plt.xlabel("slide (m)")
-    plt.ylabel("AEP (GWh)")
-    plt.title("Annual Energy Production Vs. Wind-perpendicular Slide Tolerance")
-    plt.show()
+    if plot:
+        plt.plot(radius_list, results)
+        max_aep = results.max()
+        opt_shift = radius_list[results.argmax()]
+        print("max aep: " + str(max_aep) + " GWh")
+        print("max aep at shift: " + str(opt_shift) + " m")
+        plt.xlabel("slide (m)")
+        plt.ylabel("AEP (GWh)")
+        plt.title("Annual Energy Production Vs. Wind-perpendicular Slide Tolerance")
+        plt.show()
+    return max_aep, opt_shift
+
+
+# generates a farm with 0 shift, output will give shift value to optimize that layout for a given wind condition
+# takes spacing in multiples of turbine Diameter
+def find_opt_shift(site, turbine, farm_width, farm_length, width_spacing, length_spacing):
+    dia = turbine.diameter()
+    hub = turbine.hub_height()
+    farm = WindFarm(generate_layout(farm_width, dia*width_spacing, farm_length, dia*length_spacing, 0))
+    max_aep, opt_shift = test_perp_slide(site, farm, turbine, slide_range=dia*width_spacing*2, granularity=dia*0.1, plot=False)
+    return max_aep, opt_shift
+
+
+# the goal of this function would be to optimize a farm based on a simple site, then run it against a more complex
+# site to see if there's an AEP upside to the perpendicular slide from the already optimized shift
+# if I figure out the right metrics, I could possibly try to then subtract the simple site from the complex site
+# and compare that wind difference against the AEP upside.
+def trifurcate_upside(simple_site, complex_site, turbine, farm_width, farm_length, width_spacing, length_spacing):
+    return "null"
 
 
 def main():
@@ -243,7 +265,7 @@ def main():
     print('Diameter', wt.diameter())
     print('Hub height', wt.hub_height())
     TenXNRELFarm = WindFarm(generate_layout(10, wt.diameter()*5, 10, wt.diameter()*7, 590))
-    test_perp_slide(TenXNRELFarm, wt, slide_range=wt.diameter()*4, granularity=wt.diameter()*0.1)
+    test_perp_slide(MySite(), TenXNRELFarm, wt, slide_range=wt.diameter()*4, granularity=wt.diameter()*0.1)
     # test_perp_slide(RotTenFarm, wt, slide_range=100, granularity=10, plot=True)
     # plot_p_ct()
 
