@@ -1,36 +1,12 @@
-# this is a copy site of the hornsrev site file. I may edit this to test things
-import copy
+# my main working file for testing my methods that use weibull site data and calculating possible relocation upsides
 import random
 from py_wake import np
 from matplotlib import pyplot as plt
 import math
 from py_wake.wind_farm_models import PropagateDownwind
 from py_wake import deficit_models as dm
-from py_wake.site._site import UniformWeibullSite
-from py_wake.wind_turbines import WindTurbine
-from py_wake.wind_turbines.power_ct_functions import PowerCtTabular
-from p_ct_curves import V80ct_curve, V80power_curve, NREL15power_curve, NREL15ct_curve
-
-
-class V80(WindTurbine):
-    def __init__(self, method='linear'):
-        """
-        Parameters
-        ----------
-        method : {'linear', 'pchip'}
-            linear(fast) or pchip(smooth and gradient friendly) interpolation
-        """
-        WindTurbine.__init__(self, name='V80', diameter=80, hub_height=70,
-                             powerCtFunction=PowerCtTabular(V80power_curve[:, 0], V80power_curve[:, 1], 'w',
-                                                            V80ct_curve[:, 1], method=method))
-
-
-# [1] E. Gaertner et al., “Definition of the IEA Wind 15-Megawatt Offshore Reference Wind Turbine,” NREL/TP-5000-75698, Mar. 2020. [Online]. Available: https://www.nrel.gov/docs/fy20osti/75698.pdf
-class NREL15(WindTurbine):
-    def __init__(self, method='linear'):
-        WindTurbine.__init__(self, name='NREL15', diameter=240, hub_height=150,
-                             powerCtFunction=PowerCtTabular(NREL15power_curve[:, 0], NREL15power_curve[:, 1], 'w',
-                                                            NREL15ct_curve[:, 1], method=method))
+from sites import EastBlowHornsrevSite, MyBiSite, MyTriSite
+from turbines import V80, NREL15
 
 
 class Turbine_instance:
@@ -107,32 +83,6 @@ def simple_farm_maker():
     return simple_farm
 
 
-class EastBlowHornsrevSite(UniformWeibullSite):
-    def __init__(self, ti=.1, shear=None):
-        f = [3.597152, 3.948682, 5.167395, 7.000154, 8.364547, 6.43485,
-             8.643194, 11.77051, 15.15757, 14.73792, 10.01205, 5.165975]
-        a = [9.176929, 9.782334, 9.531809, 9.909545, 10.04269, 9.593921,
-             9.584007, 10.51499, 11.39895, 11.68746, 11.63732, 10.08803]
-        k = [2.392578, 2.447266, 2.412109, 2.591797, 2.755859, 2.595703,
-             2.583984, 2.548828, 2.470703, 2.607422, 2.626953, 2.326172]
-        UniformWeibullSite.__init__(self, np.array(f) / np.sum(f), a, k, ti=ti, shear=shear)
-        # to plot windrose, un-comment below
-        # self.plot_wd_distribution(n_wd=12, ws_bins=[0, 5, 10, 15, 20, 25])
-
-
-class MySite(UniformWeibullSite):
-    def __init__(self, ti=.1, shear=None):
-        f = [1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0]
-        a = [9.176929, 9.782334, 9.531809, 9.909545, 10.04269, 9.593921,
-             9.584007, 10.51499, 11.39895, 11.68746, 11.63732, 10.08803]
-        k = [2.392578, 2.447266, 2.412109, 2.591797, 2.755859, 2.595703,
-             2.583984, 2.548828, 2.470703, 2.607422, 2.626953, 2.326172]
-        UniformWeibullSite.__init__(self, np.array(f) / np.sum(f), a, k, ti=ti, shear=shear)
-        # to plot windrose, un-comment below
-        # self.plot_wd_distribution(n_wd=12, ws_bins=[0, 5, 10, 15, 20, 25])
-        # plt.show()
-
-
 def generate_layout(y, y_spacing, x, x_spacing, shift, heading_deg=0):
     layout = np.empty([y, x], list)
     for i in range(y):
@@ -196,9 +146,12 @@ def test_random(farm, turbine, rad_range=1000, iterations=100, granularity=10, p
     plt.show()
 
 
-def test_perp_slide(site, farm, turbine, wind_direction=0, slide_range=100, granularity=10, plot=True, flow_plot=False):
+def test_perp_slide(site, farm, turbine, slide_start, slide_end, granularity=50, plot=True,
+                    flow_plot=False):
     farm_heading = farm.heading
-    radius_list = np.linspace(0, slide_range, int(slide_range / granularity + 1))
+    wind_direction = site.dominant
+    slide_range = slide_end - slide_start
+    radius_list = np.linspace(slide_start, slide_end, int(slide_range / granularity + 1))
     Sim = PropagateDownwind(site, turbine, wake_deficitModel=dm.NOJDeficit())
     # run the simulation for Annual Energy Production (AEP)
     simulationResult = Sim(farm.wt_x, farm.wt_y)
@@ -209,9 +162,10 @@ def test_perp_slide(site, farm, turbine, wind_direction=0, slide_range=100, gran
         simulation = Sim(farm.wt_x, farm.wt_y)
         mapsim = Sim(farm.wt_x, farm.wt_y)
         results[i] = float(simulation.aep(normalize_probabilities=True).sum())
+        print(rad)
         if flow_plot and i % 10 == 0:
             wind_speed = 10
-            wind_direction = 30  ## TODO why is this value affecting AEP?!?!?!?!
+            wind_direction = 30   # TODO why is this value affecting AEP?!?!?!?!
             flow_map = mapsim.flow_map(ws=wind_speed, wd=wind_direction)
             plt.figure()
             flow_map.plot_wake_map()
@@ -220,54 +174,110 @@ def test_perp_slide(site, farm, turbine, wind_direction=0, slide_range=100, gran
             plt.grid()
             plt.title('Wake map for' + f' {wind_speed} m/s, {wind_direction} deg, {rad} m stationholding radius')
             plt.show()
+    max_aep = results.max()  # this could be upgraded using an interpolation or a derivative sensitive granularity
+    opt_shift = radius_list[results.argmax()]
+    steps = len(results)
     if plot:
         plt.plot(radius_list, results)
-        max_aep = results.max()
-        opt_shift = radius_list[results.argmax()]
         print("max aep: " + str(max_aep) + " GWh")
         print("max aep at shift: " + str(opt_shift) + " m")
         plt.xlabel("slide (m)")
         plt.ylabel("AEP (GWh)")
         plt.title("Annual Energy Production Vs. Wind-perpendicular Slide Tolerance")
         plt.show()
-    return max_aep, opt_shift
+    return max_aep, opt_shift, steps
+
+
+# attempt to get higher res data around extrema with less computation - runge-kutta 4th?
+def efficient_perp_slide(site, farm, turbine, wind_direction=0, slide_range=100, plot=True, flow_plot=False):
+    farm_heading = farm.heading
+    radius = 0
+    Sim = PropagateDownwind(site, turbine, wake_deficitModel=dm.NOJDeficit())
+    # run the simulation for Annual Energy Production (AEP)
+    init_result = Sim(farm.wt_x, farm.wt_y)
+    AEP = float(init_result.aep(normalize_probabilities=True).sum())
+    results = np.array(AEP)
+    radius_list = np.array(radius)
+    slide_factor = 1
+    radius += slide_factor
+    while radius <= slide_range:
+        farm.perp_slide(radius, wind_direction)
+        next_result = Sim(farm.wt_x, farm.wt_y)
+        AEP = float(next_result.aep(normalize_probabilities=True).sum())
+        results = np.append(results, AEP)
+        radius_list = np.append(radius_list, radius)
+        dAEP = abs(results[-1] - results[-2])
+        if dAEP <= 4:
+            slide_factor *= 1.2
+        else:
+            slide_factor *= 0.8
+        radius += slide_factor
+        print(radius)
+    max_aep = results.max()  # this could be upgraded using an interpolation or a derivative sensitive granularity
+    opt_shift = radius_list[results.argmax()]
+    steps = len(results)
+    if plot:
+        plt.plot(radius_list, results)
+        print("max aep: " + str(max_aep) + " GWh")
+        print("max aep at shift: " + str(opt_shift) + " m")
+        plt.xlabel("slide (m)")
+        plt.ylabel("AEP (GWh)")
+        plt.title("Annual Energy Production Vs. Wind-perpendicular Slide Tolerance")
+        plt.show()
+    return max_aep, opt_shift, steps
 
 
 # generates a farm with 0 shift, output will give shift value to optimize that layout for a given wind condition
 # takes spacing in multiples of turbine Diameter
-def find_opt_shift(site, turbine, farm_width, farm_length, width_spacing, length_spacing):
+def find_opt_shift(site, turbine, farm_width, farm_length, width_spacing, length_spacing, plot=False):
     dia = turbine.diameter()
     hub = turbine.hub_height()
-    farm = WindFarm(generate_layout(farm_width, dia*width_spacing, farm_length, dia*length_spacing, 0))
-    max_aep, opt_shift = test_perp_slide(site, farm, turbine, slide_range=dia*width_spacing*2, granularity=dia*0.1, plot=False)
-    return max_aep, opt_shift
+    farm = WindFarm(generate_layout(farm_width, dia * width_spacing, farm_length, dia * length_spacing, 0))
+    max_aep, opt_shift, steps = test_perp_slide(site, farm, turbine, - dia * width_spacing, dia * width_spacing,
+                                                granularity=dia * 0.1, plot=plot)
+    opt_farm = WindFarm(generate_layout(farm_width, dia * width_spacing, farm_length, dia * length_spacing, opt_shift))
+    # opt_sim = PropagateDownwind(site, turbine, wake_deficitModel=dm.NOJDeficit())
+    # simulationResult = opt_sim(opt_farm.wt_x, opt_farm.wt_y)
+    # AEP = float(simulationResult.aep(normalize_probabilities=True).sum())
+    print("Max AEP: " + str(max_aep))
+    print("Opt Shift: " + str(opt_shift) + ", w/ width spacing: " + str(width_spacing * dia) + ", representing a " + str(opt_shift/dia) + "D shift, a " + str(opt_shift/width_spacing/dia) + " multiple of the turbine spacing.")
+    return max_aep, opt_shift, opt_farm
 
 
 # the goal of this function would be to optimize a farm based on a simple site, then run it against a more complex
 # site to see if there's an AEP upside to the perpendicular slide from the already optimized shift
 # if I figure out the right metrics, I could possibly try to then subtract the simple site from the complex site
 # and compare that wind difference against the AEP upside.
-def trifurcate_upside(simple_site, complex_site, turbine, farm_width, farm_length, width_spacing, length_spacing):
-    return "null"
+def trifurcate_upside(simple_site, complex_site, turbine, farm_width, farm_length, width_spacing=5, length_spacing=7):
+    dia = turbine.diameter()
+    w_spacing_m, l_spacing_m = dia*width_spacing, dia*length_spacing
+    init_AEP, init_shift, opt_farm = find_opt_shift(simple_site, turbine, farm_width, farm_length, width_spacing, length_spacing, plot=False)
+    opt_sim = PropagateDownwind(complex_site, turbine, wake_deficitModel=dm.NOJDeficit())
+    immobileResult = opt_sim(opt_farm.wt_x, opt_farm.wt_y)
+    opt_AEP = float(immobileResult.aep(normalize_probabilities=True).sum())
+    max_complex_AEP, approx_shift, steps = test_perp_slide(complex_site, opt_farm, turbine, -w_spacing_m, w_spacing_m)
+    upside = max_complex_AEP - opt_AEP
+    upside_percent = (max_complex_AEP - opt_AEP)/opt_AEP * 100
+    print("The potential upside is " + str(upside) + " GWh, (~" + str(int(upside_percent)) + "%) and the approximate shift distance is " + str(approx_shift) + "m.")
+    return upside, approx_shift
 
 
 def main():
-    # wt = V80()
-    # print('Diameter', wt.diameter())
-    # print('Hub height', wt.hub_height())
-    # test_random(simple_farm, wt, rad_range=50, iterations=1000, granularity=1, plot=True)
-    # test_perp_slide(simple_farm, wt, slide_range=500, granularity=10)
-    # print(generate_layout(3, 500, 3, 500, 0))
-    # TenFarm = WindFarm(generate_layout(10, 500, 10, 500, 150))
-    # RotTenFarm = WindFarm(generate_layout(10, 500, 10, 500, 0, heading_deg=45), heading=45)
     # test_perp_slide(TenFarm, wt, slide_range=200, granularity=10)
     wt = NREL15()
-    print('Diameter', wt.diameter())
-    print('Hub height', wt.hub_height())
-    TenXNRELFarm = WindFarm(generate_layout(10, wt.diameter()*5, 10, wt.diameter()*7, 590))
-    test_perp_slide(MySite(), TenXNRELFarm, wt, slide_range=wt.diameter()*4, granularity=wt.diameter()*0.1)
+    five_d = wt.diameter() * 5
+    seven_d = wt.diameter() * 7
+    # print('Diameter', wt.diameter())
+    # print('Hub height', wt.hub_height())
+    # TenXNRELFarm = WindFarm(generate_layout(10, wt.diameter()*5, 10, wt.diameter()*7, 590))
+    # test_perp_slide(MySite(), TenXNRELFarm, wt, slide_range=wt.diameter()*4, granularity=wt.diameter()*0.1)
+    # print(test_perp_slide(MySite(), WindFarm(generate_layout(5, five_d, 5, seven_d, 0)), wt, slide_range=2000))
+    # print(efficient_perp_slide(MySite(), WindFarm(generate_layout(5, five_d, 5, seven_d, 0)), wt, slide_range=2000))
+    # find_opt_shift(MyBiSite(), wt, 5, 5, 5, 7)
+    trifurcate_upside(MyBiSite(), MyTriSite(), wt, 5, 5)
     # test_perp_slide(RotTenFarm, wt, slide_range=100, granularity=10, plot=True)
     # plot_p_ct()
+
 
 # TODO write a new function that automatically optimizes the initial farm slide according to bifurcated wind,
 # TODO and then tests in trifurcated wind

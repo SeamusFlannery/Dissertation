@@ -5,7 +5,8 @@ from py_wake.examples.data import example_data_path
 from py_wake.wind_turbines.power_ct_functions import PowerCtFunctionList, PowerCtTabular
 from py_wake.examples.data.hornsrev1 import Hornsrev1Site, V80
 from py_wake.utils.plotting import setup_plot
-from Stationholding import generate_layout, WindFarm, Turbine_instance, MySite
+from Stationholding import generate_layout, WindFarm, Turbine_instance
+from sites import MyBiSite, MyTriSite, EastBlowHornsrevSite
 from py_wake.wind_farm_models import PropagateDownwind
 from py_wake import deficit_models as dm
 
@@ -44,7 +45,7 @@ operating = np.ones((len(farm_ex.turbines), len(time_stamp)))  # shape=(#wt, #ti
 operating[0, (time_stamp > 15) & (time_stamp < 20)] = 0  # wt0 not operating from day 5 to 15
 
 # setup new WindFarmModel with site containing time-dependent TI and run simulation
-wf_model = PropagateDownwind(MySite(), windTurbines, wake_deficitModel=dm.NOJDeficit())
+wf_model = PropagateDownwind(MyBiSite(), windTurbines, wake_deficitModel=dm.NOJDeficit())
 
 sim_res_time = wf_model(farm_ex.wt_x, farm_ex.wt_y,  # wind turbine positions
                         wd=wd,  # Wind direction time series
@@ -54,3 +55,6 @@ sim_res_time = wf_model(farm_ex.wt_x, farm_ex.wt_y,  # wind turbine positions
                         operating=operating  # time dependent operating variable
                         )
 print(float(sim_res_time.aep().sum()))
+
+
+
