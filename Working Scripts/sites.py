@@ -40,7 +40,6 @@ class SiteFromSeries(UniformWeibullSite):
         for i, upper_lim in enumerate(ten_deg_bins[1:]):
             bin_speed = np.empty(0)
             for j, speed in enumerate(ws):
-                print(wd[j])
                 if upper_lim > wd[j] >= upper_lim-10:
                     bin_speed = np.append(bin_speed, speed)
             weib_fit = stats.exponweib.fit(bin_speed, floc=0, f0=1)

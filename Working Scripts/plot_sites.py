@@ -73,7 +73,7 @@ wind_direction = 0
 plt.figure()
 flow_map2 = simulationResult2.flow_map(ws=wind_speed, wd=wind_direction)
 plt.figure()
-flow_map.plot_wake_map()
+flow_map2.plot_wake_map()
 plt.xlabel('x [m]')
 plt.ylabel('y [m]')
 plt.title('Wake map for' + f' {wind_speed} m/s and {wind_direction} deg')
