@@ -83,7 +83,7 @@ def simple_farm_maker():
     return simple_farm
 
 
-def generate_layout(y, y_spacing, x, x_spacing, shift, heading_deg=0):
+def generate_layout(y, y_spacing, x, x_spacing, shift=0, heading_deg=0):
     layout = np.empty([y, x], list)
     for i in range(y):
         for j in range(x):
