@@ -5,8 +5,9 @@ from matplotlib import pyplot as plt
 import math
 from py_wake.wind_farm_models import PropagateDownwind
 from py_wake import deficit_models as dm
-from sites import EastBlowHornsrevSite, MyBiSite, MyTriSite
+from sites import EastBlowHornsrevSite, MyBiSite, MyTriSite, SiteFromSeries
 from turbines import V80, NREL15
+from sites import read_vortex
 
 
 class Turbine_instance:
@@ -110,7 +111,7 @@ def generate_layout(y, y_spacing, x, x_spacing, shift=0, heading_deg=0):
 
 def test_random(farm, turbine, rad_range=1000, iterations=100, granularity=10, plot=False):
     radius_list = np.linspace(0, rad_range, int(rad_range / granularity + 1))
-    Sim = PropagateDownwind(MySite(), turbine, wake_deficitModel=dm.NOJDeficit())
+    Sim = PropagateDownwind(MyTriSite(), turbine, wake_deficitModel=dm.NOJDeficit())
     # run the simulation for Annual Energy Production (AEP)
     simulationResult = Sim(farm.wt_x, farm.wt_y)
     AEP = float(simulationResult.aep(normalize_probabilities=False).sum())
@@ -147,9 +148,11 @@ def test_random(farm, turbine, rad_range=1000, iterations=100, granularity=10, p
 
 
 def test_perp_slide(site, farm, turbine, slide_start, slide_end, granularity=50, plot=True,
-                    flow_plot=False):
+                    flow_plot=False, time_series_dir=''):
     farm_heading = farm.heading
     wind_direction = site.dominant
+    if time_series_dir != '':
+        wind_direction = time_series_dir
     slide_range = slide_end - slide_start
     radius_list = np.linspace(slide_start, slide_end, int(slide_range / granularity + 1))
     Sim = PropagateDownwind(site, turbine, wake_deficitModel=dm.NOJDeficit())
@@ -162,7 +165,6 @@ def test_perp_slide(site, farm, turbine, slide_start, slide_end, granularity=50,
         simulation = Sim(farm.wt_x, farm.wt_y)
         mapsim = Sim(farm.wt_x, farm.wt_y)
         results[i] = float(simulation.aep(normalize_probabilities=True).sum())
-        print(rad)
         if flow_plot and i % 10 == 0:
             wind_speed = 10
             wind_direction = 30   # TODO why is this value affecting AEP?!?!?!?!
@@ -229,13 +231,13 @@ def efficient_perp_slide(site, farm, turbine, wind_direction=0, slide_range=100,
 
 # generates a farm with 0 shift, output will give shift value to optimize that layout for a given wind condition
 # takes spacing in multiples of turbine Diameter
-def find_opt_shift(site, turbine, farm_width, farm_length, width_spacing, length_spacing, plot=False):
+def find_opt_shift(site, turbine, farm_width, farm_length, width_spacing, length_spacing, heading_deg=0, plot=False):
     dia = turbine.diameter()
     hub = turbine.hub_height()
-    farm = WindFarm(generate_layout(farm_width, dia * width_spacing, farm_length, dia * length_spacing, 0))
-    max_aep, opt_shift, steps = test_perp_slide(site, farm, turbine, - dia * width_spacing, dia * width_spacing,
+    farm = WindFarm(generate_layout(farm_width, dia * width_spacing, farm_length, dia * length_spacing, 0, heading_deg=heading_deg))
+    max_aep, opt_shift, steps = test_perp_slide(site, farm, turbine, - dia * width_spacing*0.7, dia * width_spacing*0.7,
                                                 granularity=dia * 0.1, plot=plot)
-    opt_farm = WindFarm(generate_layout(farm_width, dia * width_spacing, farm_length, dia * length_spacing, opt_shift))
+    opt_farm = WindFarm(generate_layout(farm_width, dia * width_spacing, farm_length, dia * length_spacing, opt_shift, heading_deg=heading_deg))
     # opt_sim = PropagateDownwind(site, turbine, wake_deficitModel=dm.NOJDeficit())
     # simulationResult = opt_sim(opt_farm.wt_x, opt_farm.wt_y)
     # AEP = float(simulationResult.aep(normalize_probabilities=True).sum())
@@ -270,11 +272,17 @@ def main():
     # print('Diameter', wt.diameter())
     # print('Hub height', wt.hub_height())
     # TenXNRELFarm = WindFarm(generate_layout(10, wt.diameter()*5, 10, wt.diameter()*7, 590))
-    # test_perp_slide(MySite(), TenXNRELFarm, wt, slide_range=wt.diameter()*4, granularity=wt.diameter()*0.1)
+    # test_perp_slide(MyBiSite(), TenXNRELFarm, wt, granularity=wt.diameter()*0.1, plot=True)
     # print(test_perp_slide(MySite(), WindFarm(generate_layout(5, five_d, 5, seven_d, 0)), wt, slide_range=2000))
     # print(efficient_perp_slide(MySite(), WindFarm(generate_layout(5, five_d, 5, seven_d, 0)), wt, slide_range=2000))
-    # find_opt_shift(MyBiSite(), wt, 5, 5, 5, 7)
-    trifurcate_upside(MyBiSite(), MyTriSite(), wt, 5, 5)
+    # find_opt_shift(MyBiSite(), wt, 5, 5, 5, 7, plot=False)
+    print(trifurcate_upside(MyBiSite(), MyTriSite(), V80(), 5, 5))
+    series_data = read_vortex("WindData/Random/758955.6m_100m_UTC_04.0_ERA5.txt", outname="Spain Site")
+    horns_rev_series = read_vortex("WindData/HornsRev/761517.6m_100m_UTC+02.0_ERA5.txt", outname='HornsRev')
+    spain_series_site = SiteFromSeries(series_data)
+    Horns_rev_series_site = SiteFromSeries(horns_rev_series)
+    print(f'Upside from Spain series: {trifurcate_upside()}')
+    print(f'')
     # test_perp_slide(RotTenFarm, wt, slide_range=100, granularity=10, plot=True)
     # plot_p_ct()
 

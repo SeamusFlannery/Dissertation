@@ -2,11 +2,22 @@ from py_wake.site._site import UniformWeibullSite
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
+import datetime
 
 
 # method to return weibull distribution parameters
 def weibull(self, x, k, a):
     return (k / a) * (x / a) ** (k - 1) * np.exp(-(x / a) ** k)
+
+
+def read_vortex(filepath: str, outname='') -> [list, list, int]:
+    dates, times = np.loadtxt(filepath, delimiter=None, dtype=str, skiprows=4, usecols=[0, 1]).T
+    ws, wd = np.loadtxt(filepath, delimiter=None, dtype=float, skiprows=4, usecols=[2, 3]).T
+    timestamps = np.empty(dates.shape, dtype=datetime.datetime)
+    for i, day in enumerate(dates):
+        timestamps[i] = datetime.datetime.strptime(day[:4] + '/' + day[4:6] + '/' + day[6:8] + '/' + times[i][:2] + '/' + times[i][2:4], '%Y/%m/%d/%H/%M')
+    series_data = [timestamps, ws, wd, outname]
+    return series_data
 
 
 # definition of site types
@@ -28,7 +39,7 @@ class EastBlowHornsrevSite(UniformWeibullSite):
 # my attempt to make a site instance that is automatic based on time-series data
 class SiteFromSeries(UniformWeibullSite):
     def __init__(self, series_data, ti=0.1, shear=None, plot=False):
-        [time_stamps, ws, wd] = series_data
+        [time_stamps, ws, wd, outname] = series_data
         ten_deg_bins = np.linspace(0, 360, 37)
         wind_rose = np.histogram(wd, ten_deg_bins)
         primary_heading = wind_rose[1][wind_rose[0].argmax()]
@@ -49,6 +60,7 @@ class SiteFromSeries(UniformWeibullSite):
         if plot:
             print([f, a, k])
             self.plot_wd_distribution(n_wd=12, ws_bins=[0, 5, 10, 15, 20, 25])
+            plt.title(f'{outname} Site Wind Rose')
             plt.show()
 
 
