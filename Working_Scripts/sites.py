@@ -16,6 +16,9 @@ def read_vortex(filepath: str, outname='') -> [list, list, int]:
     timestamps = np.empty(dates.shape, dtype=datetime.datetime)
     for i, day in enumerate(dates):
         timestamps[i] = datetime.datetime.strptime(day[:4] + '/' + day[4:6] + '/' + day[6:8] + '/' + times[i][:2] + '/' + times[i][2:4], '%Y/%m/%d/%H/%M')
+    # The following steps are needed to handle the edge case where vortex hands data with bot 0 and 360 degree headings.
+    wd =[360 if x == 0 else x for x in wd]
+    # return to regularly scheduled coding
     series_data = [timestamps, ws, wd, outname]
     return series_data
 
@@ -53,9 +56,13 @@ class SiteFromSeries(UniformWeibullSite):
             for j, speed in enumerate(ws):
                 if upper_lim > wd[j] >= upper_lim-10:
                     bin_speed = np.append(bin_speed, speed)
-            weib_fit = stats.exponweib.fit(bin_speed, floc=0, f0=1)
-            a.append(weib_fit[3])
-            k.append(weib_fit[1])
+            if bin_speed.size != 0:
+                weib_fit = stats.exponweib.fit(bin_speed, floc=0, f0=1)
+                a.append(weib_fit[3])
+                k.append(weib_fit[1])
+            else:
+                a.append(0)
+                k.append(0)
         UniformWeibullSite.__init__(self, f / np.sum(f), a, k, ti=ti, shear=shear)
         if plot:
             print([f, a, k])

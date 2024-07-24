@@ -148,9 +148,11 @@ def test_random(farm, turbine, rad_range=1000, iterations=100, granularity=10, p
 
 
 def test_perp_slide(site, farm, turbine, slide_start, slide_end, granularity=50, plot=True,
-                    flow_plot=False, time_series_dir=''):
+                    flow_plot=False, time_series_dir='', wd=''):
     farm_heading = farm.heading
     wind_direction = site.dominant
+    if wd != '':
+        wind_direction = wd
     if time_series_dir != '':
         wind_direction = time_series_dir
     slide_range = slide_end - slide_start
@@ -262,6 +264,7 @@ def trifurcate_upside(simple_site, complex_site, turbine, farm_width, farm_lengt
     upside_percent = (max_complex_AEP - opt_AEP)/opt_AEP * 100
     print("The potential upside is " + str(upside) + " GWh, (~" + str(int(upside_percent)) + "%) and the approximate shift distance is " + str(approx_shift) + "m.")
     return upside, approx_shift
+
 
 
 def main():
