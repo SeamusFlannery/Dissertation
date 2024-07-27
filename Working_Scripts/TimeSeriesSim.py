@@ -47,7 +47,8 @@ def time_chunk(series_data, max_freq, dir_sensitivity=20, mode='freq'):
         return chunks, chunk_lengths
     elif mode == "no freq":  # mode that simply groups time chunks by wind directions and then reports frequency
         for i, timestamp in enumerate(times):
-            if abs(dom_wind_dir - wd[i]) <= dir_sensitivity:  # default if wind direction is within 30, no repositioning necessary?
+            if abs(dom_wind_dir - wd[
+                i]) <= dir_sensitivity:  # default if wind direction is within 30, no repositioning necessary?
                 current_chunk.append(timestamp)
             elif abs(dom_wind_dir - wd[i]) > dir_sensitivity:
                 chunks.append(current_chunk)
@@ -106,7 +107,7 @@ def sim_time_series(series_data, turbine, farm_width=5, farm_length=5, width_spa
                 chunk) / len(time_stamps)
             chunk_aeps.append(chunk_aep_normalized)
         else:
-            print(f'shifting farm {fast}m from initial starting points for rapid test on chunk {i} of {len(chunks)}')
+            # print(f'shifting farm {fast}m from initial starting points for rapid test on chunk {i} of {len(chunks)}')
             # shift = test_perp_slide(Site, initial_farm, turbine, - dia * width_spacing * 0.3, dia * width_spacing * 0.3, granularity=dia * 0.1, plot=plot, time_series_dir=chunk_wd[0])[1]
             initial_farm.perp_slide(fast, chunk_wd[0])
             shift_distances.append(fast)
@@ -132,7 +133,7 @@ def sim_time_series_lookup(series_data, turbine, farm_width=5, farm_length=5, wi
                            plot=False, fast='', lookup_file='', chunk_freq=20, chunk_sensitivity=20):
     # start by analyzing the input time_series
     [time_stamps, ws, wd, outname] = series_data
-    print(f'Beginning analysis of {outname}')
+    # print(f'Beginning analysis of {outname}')
     ten_deg_bins = np.linspace(0, 360, 37)
     wind_rose = np.histogram(wd, ten_deg_bins)
     primary_heading = wind_rose[1][wind_rose[0].argmax()]
@@ -157,14 +158,15 @@ def sim_time_series_lookup(series_data, turbine, farm_width=5, farm_length=5, wi
     print(f'{len(chunks)} chunks defined')
     shift_distances = []
     shift_directions = []
-    chunk_aeps = []  # TODO are these normalized?
+    chunk_aeps = []
     if fast == 'lookup':
         try:
             degrees, shift_table = read_lookup(lookup_file)
         except FileNotFoundError:
             degrees, shift_table = gen_lookup(Site, initial_farm, turbine, outname=lookup_file)
         lookup_table = np.array([degrees, shift_table])
-    for i, chunk in enumerate(chunks):  # this could be time/computation expensive, consider switching to indexed instead of time-stamp search
+    for i, chunk in enumerate(
+            chunks):  # this could be time/computation expensive, consider switching to indexed instead of time-stamp search
         start_index = np.where(time_stamps == chunk[0])[0][0]
         end_index = start_index + chunk_lengths[i]
         chunk_times = time_stamps[start_index:end_index]
@@ -185,7 +187,7 @@ def sim_time_series_lookup(series_data, turbine, farm_width=5, farm_length=5, wi
 
         elif fast == 'lookup':
             slide_dist = lookup_table[1, np.where(lookup_table[0] == chunk_wd[0])]
-            print(f'shifting farm {int(slide_dist)} m from initial starting points for rapid test on chunk {i} of {len(chunks)}')
+            # print(f'shifting farm {int(slide_dist)} m from initial starting points for rapid test on chunk {i} of {len(chunks)}')
             slide_perp_angle = chunk_wd[0]
             initial_farm.perp_slide(slide_dist, slide_perp_angle)
             shift_distances.append(slide_dist)
@@ -210,7 +212,8 @@ def sim_time_series_lookup(series_data, turbine, farm_width=5, farm_length=5, wi
 
 
 def animate_flowmap_time_series(series_data, turbine, farm_width=5, farm_length=5, width_spacing=5, length_spacing=7,
-                                mobile=False, out_dir='animation', out_name='animation', lookup_table='', dir_sensitivity=10):
+                                mobile=False, out_dir='animation', out_name='animation', lookup_table='',
+                                dir_sensitivity=10):
     [time_stamps, ws, wd, outname] = series_data
     ten_deg_bins = np.linspace(0, 360, 37)
     wind_rose = np.histogram(wd, ten_deg_bins)
@@ -286,7 +289,7 @@ def animate_flowmap_time_series(series_data, turbine, farm_width=5, farm_length=
                 print(f'generating hour {hour}')
                 # generate flowmaps
                 mobile_time_sim_results = wf_model(initial_farm.wt_x, initial_farm.wt_y, wd=chunk_wd[j], ws=chunk_ws[j],
-                                               time=chunk_times[j], TI=0.1)
+                                                   time=chunk_times[j], TI=0.1)
                 flow_map = mobile_time_sim_results.flow_map(ws=chunk_ws[j], wd=chunk_wd[j])
                 frame = flow_map.plot_wake_map(plot_colorbar=False)
                 # add consistent labelling and axes limits to flowmaps
@@ -309,53 +312,69 @@ def animate_flowmap_time_series(series_data, turbine, farm_width=5, farm_length=
     return None
 
 
+def add_noise(series_data, ws_uncert):
+    ws = series_data[1]
+    # noise = np.random.normal(noise_mean, noise_stdv, len(ws))
+    ws_w_noise = [x*ws_uncert for x in ws]
+    series_data = [series_data[0], ws_w_noise, series_data[2], series_data[3]]
+    return series_data
+
+
 def main():
     wt = NREL15()
     dia = wt.diameter()
+    sensitivity_settings = [1, 5, 10, 20, 40, 90]
+    # bias = 0.38  # vortex validation
+    # bias_stdv = 0.32  # vortex validation
+    # r_squared_mean = 0.85 # vortex validation
+    ws_uncert = 1.02  # vortex validation and industry practice from Velosco
 
-    # READ IN VORTEX DATA
+    # READ IN VORTEX DATA, CREATE NOISY VERSIONS (Vortex data 0.85 R^2 hourly data -> 2% ws uncertainty)
     chile_series = read_vortex("WindData/Random/758955.6m_100m_UTC_04.0_ERA5.txt", outname='Chile')
+    chile_noise = add_noise(chile_series, ws_uncert)
     horns_rev_series = read_vortex("WindData/HornsRev/761517.6m_100m_UTC+02.0_ERA5.txt", outname='HornsRev')
-    horns_rev_short = read_vortex("WindData/HornsRev/761517.6m_100m_UTC+02.0_ERA5_short.txt", outname='HornsRevShort')
+    horns_rev_noise = add_noise(horns_rev_series, ws_uncert)
+    # horns_rev_short = read_vortex("WindData/HornsRev/761517.6m_100m_UTC+02.0_ERA5_short.txt", outname='HornsRevShort')
     taiwan_series = read_vortex("WindData/Taiwan/764811.6m_100m_UTC+08.0_ERA5.txt", outname="Taiwan")
+    taiwan_noise = add_noise(taiwan_series, ws_uncert)
     nz_series = read_vortex("WindData/New_Zealand/764813.6m_100m_UTC+12.0_ERA5.txt", outname="New Zealand")
+    nz_noise = add_noise(nz_series, ws_uncert)
     cali_series = read_vortex('WindData/California/764815.6m_100m_UTC-07.0_ERA5.txt', outname="California")
-
-    # CREATE NOISE ARRAY
-    noise = np.random.normal(0.38, 0.32, len(taiwan_series))
-
-    # ANIMATION CODE NOT CURRENTLY IN USE
-    # animate_flowmap_time_series(spain_series, wt, mobile=True, out_dir='spain_mobile_animation', out_name='animation', lookup_table='chile5x5_lookup.csv', dir_sensitivity=5)
-    # chunks, chunk_lengths = time_chunk(series_data, 24*7, mode='no freq')
-    # plt.hist(chunk_lengths, np.linspace(0, max(chunk_lengths), 100))
-    # print(f'The time series, length {len(series_data[0])} hours, was chunked into {len(chunks)} chunks, of average length {np.mean(chunk_lengths)}')
-    # plt.close()
+    cali_noise = add_noise(cali_series, ws_uncert)
 
 
-    # print('Spain Site:')
-    # upside, upside_percent = sim_time_series_lookup(series_data, wt, fast='lookup', lookup_file='chile5x5_lookup.csv', chunk_sensitivity=90)
-    # print(f'upside: {str(upside)[0:5]} GWh')
-    # print(f'Which is a {str(upside_percent)[0:5]}% improvement')
-    upside, upside_percent, initial_farm, extreme_farm = sim_time_series_lookup(taiwan_series, wt, fast="lookup", lookup_file="cali5x5_lookup.csv", plot=False, chunk_sensitivity=90)
-    print(f'upside: {str(upside)[0:5]} GWh')
-    print(f'Which is a {str(upside_percent)[0:5]}% improvement')
+    # RUN SITES
+    for i, sensitivity_setting in enumerate(sensitivity_settings):
+        print('Chile Site:')
+        upside, upside_percent, initial_farm, extreme_farm = sim_time_series_lookup(chile_series, wt, fast='lookup',
+                                                                                    lookup_file='chile5x5_lookup.csv',
+                                                                                    chunk_sensitivity=sensitivity_setting)
+        print(f'upside: {str(upside)[0:5]} GWh')
+        print(f'Which is a {str(upside_percent)[0:5]}% improvement')
+        uncert_upside, uncert_percent, initial_farm, extreme_farm = sim_time_series_lookup(chile_noise, wt,
+                                                                                           fast='lookup',
+                                                                                           lookup_file='chile5x5_lookup.csv',
+                                                                                           chunk_sensitivity=sensitivity_setting)
+        print(
+            f'uncertainty upside, {uncert_percent*100}%, vs initial upside {upside_percent*100}% for a percent uncertainty of {(upside_percent - uncert_percent) * 100 / upside_percent}\n%')
 
-    horns_rev_geodetic = [(55, 29, 9.5), (7, 50, 23.9)]  # Lat, Long
-    horns_rev_dec = [dms_to_decimal(horns_rev_geodetic[0]), dms_to_decimal(horns_rev_geodetic[1])]
 
-    chile_dec = [-25, -70]
-    taiwan_dec = [24.67, 120.05]
-    nz_dec = [-37.405074, 178.681641]
-    ca_dec = [33.870416, -120.739746]
-    initial_farm_coords = farm_to_utm(initial_farm, ca_dec)
-    extreme_farm_coords = farm_to_utm(extreme_farm, ca_dec)
-    print(f'initial farm coord list: {initial_farm_coords}')
-    print(f'extreme farm coord list: {extreme_farm_coords}')
-    raw_init_coords = np.squeeze(initial_farm_coords[1])
-    raw_extr_coords = np.squeeze(extreme_farm_coords[1])
-    np.savetxt(f"farm_coords/initial_farm_coords.csv", raw_init_coords, delimiter=",")
-    np.savetxt(f"farm_coords/extreme_farm_coords.csv", raw_extr_coords, delimiter=",")
-
+    # TURBINE COORDINATE EXTRACTION NOT IN USE CURRENTLY
+    # horns_rev_geodetic = [(55, 29, 9.5), (7, 50, 23.9)]  # Lat, Long
+    # horns_rev_dec = [dms_to_decimal(horns_rev_geodetic[0]), dms_to_decimal(horns_rev_geodetic[1])]
+    #
+    # chile_dec = [-25, -70]
+    # taiwan_dec = [24.67, 120.05]
+    # nz_dec = [-37.405074, 178.681641]
+    # ca_dec = [33.870416, -120.739746]
+    # initial_farm_coords = farm_to_utm(initial_farm, ca_dec)
+    # extreme_farm_coords = farm_to_utm(extreme_farm, ca_dec)
+    # print(f'initial farm coord list: {initial_farm_coords}')
+    # print(f'extreme farm coord list: {extreme_farm_coords}')
+    # raw_init_coords = np.squeeze(initial_farm_coords[1])
+    # raw_extr_coords = np.squeeze(extreme_farm_coords[1])
+    # np.savetxt(f"farm_coords/initial_farm_coords.csv", raw_init_coords, delimiter=",")
+    # np.savetxt(f"farm_coords/extreme_farm_coords.csv", raw_extr_coords, delimiter=",")
 
     # print('Taiwan Site:')
     # upside, upside_percent = sim_time_series_lookup(taiwan_series, wt, fast="lookup", lookup_file="taiwan5x5_lookup.csv", plot=False, chunk_sensitivity=1)
@@ -371,6 +390,13 @@ def main():
     # upside, upside_percent = sim_time_series_lookup(cali_series, wt, fast="lookup", lookup_file="cali5x5_lookup.csv", plot=False, chunk_sensitivity=90)
     # print(f'upside: {str(upside)[0:5]} GWh')
     # print(f'Which is a {str(upside_percent)[0:5]}% improvement')
+
+    # ANIMATION CODE NOT CURRENTLY IN USE
+    # animate_flowmap_time_series(spain_series, wt, mobile=True, out_dir='spain_mobile_animation', out_name='animation', lookup_table='chile5x5_lookup.csv', dir_sensitivity=5)
+    # chunks, chunk_lengths = time_chunk(series_data, 24*7, mode='no freq')
+    # plt.hist(chunk_lengths, np.linspace(0, max(chunk_lengths), 100))
+    # print(f'The time series, length {len(series_data[0])} hours, was chunked into {len(chunks)} chunks, of average length {np.mean(chunk_lengths)}')
+    # plt.close()
 
 
 if __name__ == '__main__':
