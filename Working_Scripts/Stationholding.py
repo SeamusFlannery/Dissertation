@@ -237,7 +237,7 @@ def find_opt_shift(site, turbine, farm_width, farm_length, width_spacing, length
     dia = turbine.diameter()
     hub = turbine.hub_height()
     farm = WindFarm(generate_layout(farm_width, dia * width_spacing, farm_length, dia * length_spacing, 0, heading_deg=heading_deg))
-    max_aep, opt_shift, steps = test_perp_slide(site, farm, turbine, - dia * width_spacing*0.7, dia * width_spacing*0.7,
+    max_aep, opt_shift, steps = test_perp_slide(site, farm, turbine, - dia * width_spacing, dia * width_spacing,
                                                 granularity=dia * 0.1, plot=plot)
     opt_farm = WindFarm(generate_layout(farm_width, dia * width_spacing, farm_length, dia * length_spacing, opt_shift, heading_deg=heading_deg))
     # opt_sim = PropagateDownwind(site, turbine, wake_deficitModel=dm.NOJDeficit())

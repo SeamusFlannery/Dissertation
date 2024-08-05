@@ -331,44 +331,50 @@ def main():
 
     # READ IN VORTEX DATA, CREATE NOISY VERSIONS (Vortex data 0.85 R^2 hourly data -> 2% ws uncertainty)
     chile_series = read_vortex("WindData/Random/758955.6m_100m_UTC_04.0_ERA5.txt", outname='Chile')
-    chile_noise = add_noise(chile_series, ws_uncert)
+    # chile_noise = add_noise(chile_series, ws_uncert)
     horns_rev_series = read_vortex("WindData/HornsRev/761517.6m_100m_UTC+02.0_ERA5.txt", outname='HornsRev')
-    horns_rev_noise = add_noise(horns_rev_series, ws_uncert)
-    # horns_rev_short = read_vortex("WindData/HornsRev/761517.6m_100m_UTC+02.0_ERA5_short.txt", outname='HornsRevShort')
-    taiwan_series = read_vortex("WindData/Taiwan/764811.6m_100m_UTC+08.0_ERA5.txt", outname="Taiwan")
-    taiwan_noise = add_noise(taiwan_series, ws_uncert)
-    nz_series = read_vortex("WindData/New_Zealand/764813.6m_100m_UTC+12.0_ERA5.txt", outname="New Zealand")
-    nz_noise = add_noise(nz_series, ws_uncert)
-    cali_series = read_vortex('WindData/California/764815.6m_100m_UTC-07.0_ERA5.txt', outname="California")
-    cali_noise = add_noise(cali_series, ws_uncert)
-
+    # horns_rev_noise = add_noise(horns_rev_series, ws_uncert)
+    # # horns_rev_short = read_vortex("WindData/HornsRev/761517.6m_100m_UTC+02.0_ERA5_short.txt", outname='HornsRevShort')
+    # taiwan_series = read_vortex("WindData/Taiwan/764811.6m_100m_UTC+08.0_ERA5.txt", outname="Taiwan")
+    # taiwan_noise = add_noise(taiwan_series, ws_uncert)
+    # nz_series = read_vortex("WindData/New_Zealand/764813.6m_100m_UTC+12.0_ERA5.txt", outname="New Zealand")
+    # nz_noise = add_noise(nz_series, ws_uncert)
+    # cali_series = read_vortex('WindData/California/764815.6m_100m_UTC-07.0_ERA5.txt', outname="California")
+    # cali_noise = add_noise(cali_series, ws_uncert)
+    maine_series = read_vortex("WindData/Maine/771051.6m100mUTC-03.0ERA5_FULLYEAR_EDIT.txt", outname='Maine')
+    maine_noise = add_noise(maine_series, ws_uncert)
 
     # RUN SITES
+    # wind_rose = SiteFromSeries(maine_series, plot=True)
+
     for i, sensitivity_setting in enumerate(sensitivity_settings):
-        print('Chile Site:')
-        upside, upside_percent, initial_farm, extreme_farm = sim_time_series_lookup(chile_series, wt, fast='lookup',
-                                                                                    lookup_file='chile5x5_lookup.csv',
-                                                                                    chunk_sensitivity=sensitivity_setting)
-        print(f'upside: {str(upside)[0:5]} GWh')
-        print(f'Which is a {str(upside_percent)[0:5]}% improvement')
-        uncert_upside, uncert_percent, initial_farm, extreme_farm = sim_time_series_lookup(chile_noise, wt,
-                                                                                           fast='lookup',
-                                                                                           lookup_file='chile5x5_lookup.csv',
-                                                                                           chunk_sensitivity=sensitivity_setting)
-        print(
-            f'uncertainty upside, {uncert_percent*100}%, vs initial upside {upside_percent*100}% for a percent uncertainty of {(upside_percent - uncert_percent) * 100 / upside_percent}\n%')
+         print('Maine Site:')
+         upside, upside_percent, initial_farm, extreme_farm = sim_time_series_lookup(maine_series, wt, fast='lookup',
+                                                                                     lookup_file='maine5x5_lookup.csv',
+                                                                                     chunk_sensitivity=sensitivity_setting)
+         print(f'upside: {str(upside)[0:5]} GWh')
+         print(f'Which is a {str(upside_percent)[0:5]}% improvement')
+         uncert_upside, uncert_percent, initial_farm, extreme_farm = sim_time_series_lookup(maine_noise, wt,
+                                                                                            fast='lookup',
+                                                                                            lookup_file='maine5x5_lookup.csv',
+                                                                                            chunk_sensitivity=sensitivity_setting)
+         print(
+             f'uncertainty upside, {uncert_percent}%, vs initial upside {upside_percent}% for a percent uncertainty of {(upside_percent - uncert_percent) * 100 / upside_percent}\n%')
 
 
     # TURBINE COORDINATE EXTRACTION NOT IN USE CURRENTLY
     # horns_rev_geodetic = [(55, 29, 9.5), (7, 50, 23.9)]  # Lat, Long
     # horns_rev_dec = [dms_to_decimal(horns_rev_geodetic[0]), dms_to_decimal(horns_rev_geodetic[1])]
     #
-    # chile_dec = [-25, -70]
+    chile_dec = [-25, -70]
     # taiwan_dec = [24.67, 120.05]
     # nz_dec = [-37.405074, 178.681641]
     # ca_dec = [33.870416, -120.739746]
-    # initial_farm_coords = farm_to_utm(initial_farm, ca_dec)
-    # extreme_farm_coords = farm_to_utm(extreme_farm, ca_dec)
+    # upside, upside_percent, initial_farm, extreme_farm = sim_time_series_lookup(chile_series, wt, fast='lookup',
+    #                                                                              lookup_file='chile5x5_lookup.csv',
+    #                                                                              chunk_sensitivity=1)
+    # initial_farm_coords = farm_to_utm(initial_farm, chile_dec)
+    # extreme_farm_coords = farm_to_utm(extreme_farm, chile_dec)
     # print(f'initial farm coord list: {initial_farm_coords}')
     # print(f'extreme farm coord list: {extreme_farm_coords}')
     # raw_init_coords = np.squeeze(initial_farm_coords[1])
@@ -392,7 +398,7 @@ def main():
     # print(f'Which is a {str(upside_percent)[0:5]}% improvement')
 
     # ANIMATION CODE NOT CURRENTLY IN USE
-    # animate_flowmap_time_series(spain_series, wt, mobile=True, out_dir='spain_mobile_animation', out_name='animation', lookup_table='chile5x5_lookup.csv', dir_sensitivity=5)
+    # animate_flowmap_time_series(chile_series, wt, mobile=True, out_dir='chile_mobile_animation_highsense', out_name='animation', lookup_table='chile5x5_lookup.csv', dir_sensitivity=1)
     # chunks, chunk_lengths = time_chunk(series_data, 24*7, mode='no freq')
     # plt.hist(chunk_lengths, np.linspace(0, max(chunk_lengths), 100))
     # print(f'The time series, length {len(series_data[0])} hours, was chunked into {len(chunks)} chunks, of average length {np.mean(chunk_lengths)}')

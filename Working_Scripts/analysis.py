@@ -4,7 +4,8 @@ from TimeSeriesSim import *
 def analysis_procedure():
     wt = NREL15()
     dia = wt.diameter()
-    sensitivity_settings = [1, 5, 10, 20, 40, 90]
+    sensitivity_settings = [90]
+    # sensitivity_settings = [1, 5, 10, 20, 40, 90]
     # bias = 0.38  # vortex validation
     # bias_stdv = 0.32  # vortex validation
     # r_squared_mean = 0.85 # vortex validation
@@ -38,7 +39,7 @@ def analysis_procedure():
                                                                                            lookup_file='chile5x5_lookup.csv',
                                                                                            chunk_sensitivity=sensitivity_setting)
         print(
-            f'uncertainty upside, {uncert_percent*100}%, vs initial upside {upside_percent*100}% for a percent uncertainty of {(upside_percent - uncert_percent) * 100 / upside_percent}\n%')
+            f'uncertainty upside, {uncert_percent}%, vs initial upside {upside_percent}% for a percent uncertainty of {(upside_percent - uncert_percent) * 100 / upside_percent}\n%')
         upsides.append(upside_percent)
         uncert_upsides.append(uncert_percent)
         uncertainties.append((upside_percent - uncert_percent) * 100 / upside_percent)
@@ -54,7 +55,7 @@ def analysis_procedure():
                                                                                            lookup_file='hornsrev5x5_lookup.csv',
                                                                                            chunk_sensitivity=sensitivity_setting)
         print(
-            f'uncertainty upside, {uncert_percent*100}%, vs initial upside {upside_percent*100}% for a percent uncertainty of {(upside_percent - uncert_percent) * 100 / upside_percent}%\n')
+            f'uncertainty upside, {uncert_percent}%, vs initial upside {upside_percent}% for a percent uncertainty of {(upside_percent - uncert_percent) * 100 / upside_percent}%\n')
         upsides.append(upside_percent)
         uncert_upsides.append(uncert_percent)
         uncertainties.append((upside_percent - uncert_percent) * 100 / upside_percent)
@@ -70,7 +71,7 @@ def analysis_procedure():
                                                                                            lookup_file='nz5x5_lookup.csv',
                                                                                            chunk_sensitivity=sensitivity_setting)
         print(
-            f'uncertainty upside, {uncert_percent*100}%, vs initial upside {upside_percent*100}% for a percent uncertainty of {(upside_percent - uncert_percent) * 100 / upside_percent}%\n')
+            f'uncertainty upside, {uncert_percent}%, vs initial upside {upside_percent}% for a percent uncertainty of {(upside_percent - uncert_percent) * 100 / upside_percent}%\n')
         upsides.append(upside_percent)
         uncert_upsides.append(uncert_percent)
         uncertainties.append((upside_percent - uncert_percent) * 100 / upside_percent)
@@ -86,7 +87,7 @@ def analysis_procedure():
                                                                                            lookup_file='cali5x5_lookup.csv',
                                                                                            chunk_sensitivity=sensitivity_setting)
         print(
-            f'uncertainty upside, {uncert_percent*100}%, vs initial upside {upside_percent*100}% for a percent uncertainty of {(upside_percent - uncert_percent) * 100 / upside_percent}%\n')
+            f'uncertainty upside, {uncert_percent}%, vs initial upside {upside_percent}% for a percent uncertainty of {(upside_percent - uncert_percent) * 100 / upside_percent}%\n')
         upsides.append(upside_percent)
         uncert_upsides.append(uncert_percent)
         uncertainties.append((upside_percent - uncert_percent) * 100 / upside_percent)
@@ -102,7 +103,7 @@ def analysis_procedure():
                                                                                            lookup_file='taiwan5x5_lookup.csv',
                                                                                            chunk_sensitivity=sensitivity_setting)
         print(
-            f'uncertainty upside, {uncert_percent*100}%, vs initial upside {upside_percent*100}% for a percent uncertainty of {(upside_percent - uncert_percent) * 100 / upside_percent}%\n')
+            f'uncertainty upside, {uncert_percent}%, vs initial upside {upside_percent}% for a percent uncertainty of {(upside_percent - uncert_percent) * 100 / upside_percent}%\n')
         upsides.append(upside_percent)
         uncert_upsides.append(uncert_percent)
         uncertainties.append((upside_percent - uncert_percent) * 100 / upside_percent)
