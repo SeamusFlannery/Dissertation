@@ -10,6 +10,7 @@ import imageio
 import warnings
 from coordinate_stuff import farm_to_utm, dms_to_decimal
 import copy
+from combine_images import combine_images_side_by_side
 
 # suppress overflow warnings that come from pywakes built-in weibull stuff
 warnings.filterwarnings('ignore')
@@ -213,13 +214,17 @@ def sim_time_series_lookup(series_data, turbine, farm_width=5, farm_length=5, wi
 
 def animate_flowmap_time_series(series_data, turbine, farm_width=5, farm_length=5, width_spacing=5, length_spacing=7,
                                 mobile=False, out_dir='animation', out_name='animation', lookup_table='',
-                                dir_sensitivity=10):
+                                dir_sensitivity=10, windrose=False):
     [time_stamps, ws, wd, outname] = series_data
     ten_deg_bins = np.linspace(0, 360, 37)
     wind_rose = np.histogram(wd, ten_deg_bins)
     primary_heading = wind_rose[1][wind_rose[0].argmax()]
     # create the site
     Site = SiteFromSeries(series_data)  # , plot=True)
+    if windrose:
+        Site.plot_wd_distribution(n_wd=24, ws_bins=[0, 5, 10, 15, 20, 25])
+        plt.savefig(f"{out_dir}/windrose.png")
+        plt.clf()
     # create the intial farm
     dia = turbine.diameter()
     initial_farm = WindFarm(generate_layout(farm_length, length_spacing * dia, farm_width, width_spacing * dia,
@@ -227,7 +232,6 @@ def animate_flowmap_time_series(series_data, turbine, farm_width=5, farm_length=
     frames = np.empty(0)
     if not mobile:
         for i, wind_speed in enumerate(ws):
-            fig = plt.figure()
             print(i)
             wind_direction = wd[i]
             wf_model = PropagateDownwind(Site, turbine, wake_deficitModel=dm.NOJDeficit())
@@ -285,6 +289,7 @@ def animate_flowmap_time_series(series_data, turbine, farm_width=5, farm_length=
                 shift_distances.append(shift[shift_index])
                 shift_directions.append(chunk_wd[0])
             for j, time in enumerate(chunk):
+                fig = plt.figure()
                 hour += 1
                 print(f'generating hour {hour}')
                 # generate flowmaps
@@ -304,6 +309,9 @@ def animate_flowmap_time_series(series_data, turbine, farm_width=5, farm_length=
                 plt.close()
             print(f'{len(chunk)} frames/hours generated for position {i} of {len(chunks)}')
     # frames to animation
+    if windrose:
+        for filename in frames:
+            combine_images_side_by_side(filename, f"{out_dir}/windrose.png", filename)
     with imageio.get_writer(f'{out_dir}/{out_name}.gif', mode='I', duration=0.2) as writer:
         for filename in frames:
             image = imageio.v2.imread(filename)
@@ -334,33 +342,33 @@ def main():
     # chile_noise = add_noise(chile_series, ws_uncert)
     horns_rev_series = read_vortex("WindData/HornsRev/761517.6m_100m_UTC+02.0_ERA5.txt", outname='HornsRev')
     # horns_rev_noise = add_noise(horns_rev_series, ws_uncert)
-    # # horns_rev_short = read_vortex("WindData/HornsRev/761517.6m_100m_UTC+02.0_ERA5_short.txt", outname='HornsRevShort')
+    horns_rev_short = read_vortex("WindData/HornsRev/761517.6m_100m_UTC+02.0_ERA5_short.txt", outname='HornsRevShort')
     # taiwan_series = read_vortex("WindData/Taiwan/764811.6m_100m_UTC+08.0_ERA5.txt", outname="Taiwan")
     # taiwan_noise = add_noise(taiwan_series, ws_uncert)
     # nz_series = read_vortex("WindData/New_Zealand/764813.6m_100m_UTC+12.0_ERA5.txt", outname="New Zealand")
     # nz_noise = add_noise(nz_series, ws_uncert)
     # cali_series = read_vortex('WindData/California/764815.6m_100m_UTC-07.0_ERA5.txt', outname="California")
     # cali_noise = add_noise(cali_series, ws_uncert)
-    maine_series = read_vortex("WindData/Maine/771051.6m100mUTC-03.0ERA5_FULLYEAR_EDIT.txt", outname='Maine')
-    maine_noise = add_noise(maine_series, ws_uncert)
+    # maine_series = read_vortex("WindData/Maine/771051.6m100mUTC-03.0ERA5_FULLYEAR_EDIT.txt", outname='Maine')
+    # maine_noise = add_noise(maine_series, ws_uncert)
 
     # RUN SITES
     # wind_rose = SiteFromSeries(maine_series, plot=True)
-
-    for i, sensitivity_setting in enumerate(sensitivity_settings):
-         print('Maine Site:')
-         upside, upside_percent, initial_farm, extreme_farm = sim_time_series_lookup(maine_series, wt, fast='lookup',
-                                                                                     lookup_file='maine5x5_lookup.csv',
-                                                                                     chunk_sensitivity=sensitivity_setting)
-         print(f'upside: {str(upside)[0:5]} GWh')
-         print(f'Which is a {str(upside_percent)[0:5]}% improvement')
-         uncert_upside, uncert_percent, initial_farm, extreme_farm = sim_time_series_lookup(maine_noise, wt,
-                                                                                            fast='lookup',
-                                                                                            lookup_file='maine5x5_lookup.csv',
-                                                                                            chunk_sensitivity=sensitivity_setting)
-         print(
-             f'uncertainty upside, {uncert_percent}%, vs initial upside {upside_percent}% for a percent uncertainty of {(upside_percent - uncert_percent) * 100 / upside_percent}\n%')
-
+    #
+    # for i, sensitivity_setting in enumerate(sensitivity_settings):
+    #      print('Maine Site:')
+    #      upside, upside_percent, initial_farm, extreme_farm = sim_time_series_lookup(maine_series, wt, fast='lookup',
+    #                                                                                  lookup_file='maine5x5_lookup.csv',
+    #                                                                                  chunk_sensitivity=sensitivity_setting)
+    #      print(f'upside: {str(upside)[0:5]} GWh')
+    #      print(f'Which is a {str(upside_percent)[0:5]}% improvement')
+    #      uncert_upside, uncert_percent, initial_farm, extreme_farm = sim_time_series_lookup(maine_noise, wt,
+    #                                                                                         fast='lookup',
+    #                                                                                         lookup_file='maine5x5_lookup.csv',
+    #                                                                                         chunk_sensitivity=sensitivity_setting)
+    #      print(
+    #          f'uncertainty upside, {uncert_percent}%, vs initial upside {upside_percent}% for a percent uncertainty of {(upside_percent - uncert_percent) * 100 / upside_percent}\n%')
+    #
 
     # TURBINE COORDINATE EXTRACTION NOT IN USE CURRENTLY
     # horns_rev_geodetic = [(55, 29, 9.5), (7, 50, 23.9)]  # Lat, Long
@@ -398,7 +406,19 @@ def main():
     # print(f'Which is a {str(upside_percent)[0:5]}% improvement')
 
     # ANIMATION CODE NOT CURRENTLY IN USE
-    # animate_flowmap_time_series(chile_series, wt, mobile=True, out_dir='chile_mobile_animation_highsense', out_name='animation', lookup_table='chile5x5_lookup.csv', dir_sensitivity=1)
+    animate_flowmap_time_series(horns_rev_short, wt, mobile=True, out_dir='horns_rev_short_animation40', out_name='animation',
+                                lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=40, windrose=True)
+    animate_flowmap_time_series(horns_rev_short, wt, mobile=True, out_dir='horns_rev_short_animation1',
+                                out_name='animation',
+                                lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=1, windrose=True)
+    animate_flowmap_time_series(horns_rev_series, wt, mobile=True, out_dir='horns_rev_animation90', out_name='animation', lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=90, windrose=True)
+    animate_flowmap_time_series(horns_rev_series, wt, mobile=True, out_dir='horns_rev_animation1', out_name='animation',
+                                lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=1, windrose=True)
+    animate_flowmap_time_series(chile_series, wt, mobile=True, out_dir='chile_animation1', out_name='animation',
+                                lookup_table='chile5x5_lookup.csv', dir_sensitivity=1, windrose=True)
+    animate_flowmap_time_series(chile_series, wt, mobile=True, out_dir='chile_animation90', out_name='animation',
+                                lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=90, windrose=True)
+
     # chunks, chunk_lengths = time_chunk(series_data, 24*7, mode='no freq')
     # plt.hist(chunk_lengths, np.linspace(0, max(chunk_lengths), 100))
     # print(f'The time series, length {len(series_data[0])} hours, was chunked into {len(chunks)} chunks, of average length {np.mean(chunk_lengths)}')
