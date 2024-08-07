@@ -12,7 +12,7 @@ def analysis_procedure():
     ws_uncert = 1.02  # vortex validation and industry practice from Velosco
 
     # READ IN VORTEX DATA, CREATE NOISY VERSIONS
-    chile_series = read_vortex("WindData/Random/758955.6m_100m_UTC_04.0_ERA5.txt", outname='Chile')
+    chile_series = read_vortex("WindData/Chile/758955.6m_100m_UTC_04.0_ERA5.txt", outname='Chile')
     chile_noise = add_noise(chile_series, ws_uncert)
     horns_rev_series = read_vortex("WindData/HornsRev/761517.6m_100m_UTC+02.0_ERA5.txt", outname='HornsRev')
     horns_rev_noise = add_noise(horns_rev_series, ws_uncert)

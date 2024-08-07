@@ -280,7 +280,7 @@ def main():
     # print(efficient_perp_slide(MySite(), WindFarm(generate_layout(5, five_d, 5, seven_d, 0)), wt, slide_range=2000))
     # find_opt_shift(MyBiSite(), wt, 5, 5, 5, 7, plot=False)
     print(trifurcate_upside(MyBiSite(), MyTriSite(), V80(), 5, 5))
-    series_data = read_vortex("WindData/Random/758955.6m_100m_UTC_04.0_ERA5.txt", outname="Spain Site")
+    series_data = read_vortex("WindData/Chile/758955.6m_100m_UTC_04.0_ERA5.txt", outname="Spain Site")
     horns_rev_series = read_vortex("WindData/HornsRev/761517.6m_100m_UTC+02.0_ERA5.txt", outname='HornsRev')
     spain_series_site = SiteFromSeries(series_data)
     Horns_rev_series_site = SiteFromSeries(horns_rev_series)
