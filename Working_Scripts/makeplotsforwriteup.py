@@ -23,6 +23,7 @@ def animate_flowmap_hardcoded_axes_time_series(series_data, turbine, farm_width=
         # Create the directory if it does not exist
         os.makedirs(f'{out_dir}')
     [time_stamps, ws, wd, outname] = series_data
+    time_stamps = np.array(time_stamps)
     ten_deg_bins = np.linspace(0, 360, 37)
     wind_rose = np.histogram(wd, ten_deg_bins)
     primary_heading = wind_rose[1][wind_rose[0].argmax()]
@@ -76,7 +77,9 @@ def animate_flowmap_hardcoded_axes_time_series(series_data, turbine, farm_width=
         left, right, bot, top = -2000, 8000, 0, 12000
         hour = 0
         for i, chunk in enumerate(
-                chunks):  # this could be time/computation expensive, consider switching to indexed instead of time-stamp search
+                chunks): # this could be time/computation expensive, consider switching to indexed instead of time-stamp search
+            test = chunk[0]
+            test2 = np.where(time_stamps == chunk[0])
             start_index = np.where(time_stamps == chunk[0])[0][0]
             end_index = start_index + chunk_lengths[i]
             chunk_times = time_stamps[start_index:end_index]
@@ -135,8 +138,8 @@ def main():
     dia = wt.diameter()
     chile_series = read_vortex("WindData/Chile/758955.6m_100m_UTC_04.0_ERA5.txt", outname='Chile')
     chile_short = np.array(chile_series[0:3]).T[0:25].T.tolist()
-    chile_short.append(chile_series[3])
-    print(chile_short)
+    chile_short.append([chile_series[3]])
+    chile_short = np.array(chile_short, dtype="object")
     animate_flowmap_hardcoded_axes_time_series(chile_short, wt, mobile=True, out_dir='Chile_hardcoded_axes', out_name='animation', lookup_table='chile5x5_lookup.csv', dir_sensitivity=1, windrose=True)
 
 

@@ -221,6 +221,7 @@ def animate_flowmap_time_series(series_data, turbine, farm_width=5, farm_length=
         # Create the directory if it does not exist
         os.makedirs(f'{out_dir}')
     [time_stamps, ws, wd, outname] = series_data
+    time_stamps = np.array(time_stamps)
     ten_deg_bins = np.linspace(0, 360, 37)
     wind_rose = np.histogram(wd, ten_deg_bins)
     primary_heading = wind_rose[1][wind_rose[0].argmax()]
