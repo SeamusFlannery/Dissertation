@@ -11,6 +11,8 @@ import warnings
 from coordinate_stuff import farm_to_utm, dms_to_decimal
 import copy
 from combine_images import combine_images_side_by_side
+import os
+import moviepy.editor as mp
 
 # suppress overflow warnings that come from pywakes built-in weibull stuff
 warnings.filterwarnings('ignore')
@@ -215,6 +217,9 @@ def sim_time_series_lookup(series_data, turbine, farm_width=5, farm_length=5, wi
 def animate_flowmap_time_series(series_data, turbine, farm_width=5, farm_length=5, width_spacing=5, length_spacing=7,
                                 mobile=False, out_dir='animation', out_name='animation', lookup_table='',
                                 dir_sensitivity=10, windrose=False):
+    if not os.path.exists(f'{out_dir}'):
+        # Create the directory if it does not exist
+        os.makedirs(f'{out_dir}')
     [time_stamps, ws, wd, outname] = series_data
     ten_deg_bins = np.linspace(0, 360, 37)
     wind_rose = np.histogram(wd, ten_deg_bins)
@@ -317,6 +322,9 @@ def animate_flowmap_time_series(series_data, turbine, farm_width=5, farm_length=
             image = imageio.v2.imread(filename)
             writer.append_data(image)
     np.savetxt(f'{out_dir}/{out_name}.gif_frame_list.csv', frames, fmt='%s', delimiter=',')
+    clip = mp.VideoFileClip(f'{out_dir}/{out_name}.gif')
+    clip.write_videofile(f'{out_dir}/{out_name}.mp4')
+    os.remove(f'{out_dir}/{out_name}.gif')
     return None
 
 
@@ -406,18 +414,18 @@ def main():
     # print(f'Which is a {str(upside_percent)[0:5]}% improvement')
 
     # ANIMATION CODE NOT CURRENTLY IN USE
-    animate_flowmap_time_series(horns_rev_short, wt, mobile=True, out_dir='horns_rev_short_animation40', out_name='animation',
+    # animate_flowmap_time_series(horns_rev_short, wt, mobile=True, out_dir='horns_rev_short_animation40', out_name='animation',
+    #                             lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=40, windrose=True)
+    # animate_flowmap_time_series(horns_rev_short, wt, mobile=True, out_dir='horns_rev_short_animation1', out_name='animation',
+    #                             lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=1, windrose=True)
+    # animate_flowmap_time_series(horns_rev_series, wt, mobile=True, out_dir='horns_rev_animation90', out_name='animation',
+    #                             lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=90, windrose=True)
+    animate_flowmap_time_series(horns_rev_series, wt, mobile=True, out_dir='horns_rev_animation40', out_name='animation',
                                 lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=40, windrose=True)
-    animate_flowmap_time_series(horns_rev_short, wt, mobile=True, out_dir='horns_rev_short_animation1',
-                                out_name='animation',
-                                lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=1, windrose=True)
-    animate_flowmap_time_series(horns_rev_series, wt, mobile=True, out_dir='horns_rev_animation90', out_name='animation', lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=90, windrose=True)
-    animate_flowmap_time_series(horns_rev_series, wt, mobile=True, out_dir='horns_rev_animation1', out_name='animation',
-                                lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=1, windrose=True)
     animate_flowmap_time_series(chile_series, wt, mobile=True, out_dir='chile_animation1', out_name='animation',
                                 lookup_table='chile5x5_lookup.csv', dir_sensitivity=1, windrose=True)
     animate_flowmap_time_series(chile_series, wt, mobile=True, out_dir='chile_animation90', out_name='animation',
-                                lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=90, windrose=True)
+                                lookup_table='chile5x5_lookup.csv', dir_sensitivity=90, windrose=True)
 
     # chunks, chunk_lengths = time_chunk(series_data, 24*7, mode='no freq')
     # plt.hist(chunk_lengths, np.linspace(0, max(chunk_lengths), 100))
