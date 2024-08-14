@@ -50,14 +50,15 @@ def time_chunk(series_data, max_freq, dir_sensitivity=20, mode='freq'):
         return chunks, chunk_lengths
     elif mode == "no freq":  # mode that simply groups time chunks by wind directions and then reports frequency
         for i, timestamp in enumerate(times):
-            if abs(dom_wind_dir - wd[
-                i]) <= dir_sensitivity:  # default if wind direction is within 30, no repositioning necessary?
+            if abs(dom_wind_dir - wd[i]) <= dir_sensitivity:  # default if wind direction is within 30, no repositioning necessary?
                 current_chunk.append(timestamp)
             elif abs(dom_wind_dir - wd[i]) > dir_sensitivity:
                 chunks.append(current_chunk)
                 chunk_lengths.append(len(current_chunk))
                 dom_wind_dir = wd[i]
                 current_chunk = [timestamp]
+        chunks.append(current_chunk)
+        chunk_lengths.append(len(current_chunk))
         return chunks, chunk_lengths
 
 
@@ -332,7 +333,7 @@ def animate_flowmap_time_series(series_data, turbine, farm_width=5, farm_length=
 def add_noise(series_data, ws_uncert):
     ws = series_data[1]
     # noise = np.random.normal(noise_mean, noise_stdv, len(ws))
-    ws_w_noise = [x*ws_uncert for x in ws]
+    ws_w_noise = [x * ws_uncert for x in ws]
     series_data = [series_data[0], ws_w_noise, series_data[2], series_data[3]]
     return series_data
 
@@ -421,7 +422,8 @@ def main():
     #                             lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=1, windrose=True)
     # animate_flowmap_time_series(horns_rev_series, wt, mobile=True, out_dir='horns_rev_animation90', out_name='animation',
     #                             lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=90, windrose=True)
-    animate_flowmap_time_series(horns_rev_series, wt, mobile=True, out_dir='horns_rev_animation40', out_name='animation',
+    animate_flowmap_time_series(horns_rev_series, wt, mobile=True, out_dir='horns_rev_animation40',
+                                out_name='animation',
                                 lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=40, windrose=True)
     animate_flowmap_time_series(chile_series, wt, mobile=True, out_dir='chile_animation1', out_name='animation',
                                 lookup_table='chile5x5_lookup.csv', dir_sensitivity=1, windrose=True)

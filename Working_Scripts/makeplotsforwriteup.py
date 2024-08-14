@@ -18,12 +18,12 @@ from Working_Scripts.turbines import NREL15
 def animate_flowmap_hardcoded_axes_time_series(series_data, turbine, farm_width=5, farm_length=5, width_spacing=5,
                                                length_spacing=7,
                                                mobile=False, out_dir='animation', out_name='animation', lookup_table='',
-                                               dir_sensitivity=10, windrose=False):
+                                               dir_sensitivity=10, windrose=False, start=0, end=-1):
     if not os.path.exists(f'{out_dir}'):
         # Create the directory if it does not exist
         os.makedirs(f'{out_dir}')
+    # Process the input data to generate primary heading, site, and windrose
     [time_stamps, ws, wd, outname] = series_data
-    time_stamps = np.array(time_stamps)
     ten_deg_bins = np.linspace(0, 360, 37)
     wind_rose = np.histogram(wd, ten_deg_bins)
     primary_heading = wind_rose[1][wind_rose[0].argmax()]
@@ -32,11 +32,19 @@ def animate_flowmap_hardcoded_axes_time_series(series_data, turbine, farm_width=
     if windrose:
         Site.plot_wd_distribution(n_wd=24, ws_bins=[0, 5, 10, 15, 20, 25])
         plt.savefig(f"{out_dir}/windrose.png")
-        plt.clf()
+        plt.close()
     # create the intial farm
     dia = turbine.diameter()
     initial_farm = WindFarm(generate_layout(farm_length, length_spacing * dia, farm_width, width_spacing * dia,
                                             heading_deg=primary_heading))
+    # trim data to start and endpoints if necessary
+    if start != 0 or end != -1:
+        short_data = np.array(series_data[0:3]).T[start:end].T.tolist()
+        short_data.append([series_data[3]])
+        short_data = np.array(short_data, dtype="object")
+        series_data = short_data
+        [time_stamps, ws, wd, outname] = series_data
+    time_stamps = np.array(time_stamps)  # necessary line to make a later np.where() work properly - will not work on lists with single items
     frames = np.empty(0)
     if not mobile:
         for i, wind_speed in enumerate(ws):
@@ -48,14 +56,13 @@ def animate_flowmap_hardcoded_axes_time_series(series_data, turbine, farm_width=
             frame = flow_map.plot_wake_map(plot_colorbar=False)
             plt.xlabel('x [m]')
             plt.ylabel('y [m]')
+            plt.xlim(-2000, 10000)
+            plt.ylim(-1000, 8000)
             plt.title('Wake Map for over a time-series')
             plt.savefig(f"{out_dir}/{i}.png")
             frames = np.append(frames, f'{out_dir}/{i}.png')
             plt.close()
     if mobile:
-        ten_deg_bins = np.linspace(0, 360, 37)
-        wind_rose = np.histogram(wd, ten_deg_bins)
-        primary_heading = wind_rose[1][wind_rose[0].argmax()]
         wf_model = PropagateDownwind(Site, turbine, wake_deficitModel=dm.NOJDeficit())
         # simulate time-series with immobile farm
         immobile_time_sim_results = wf_model(initial_farm.wt_x, initial_farm.wt_y, wd=wd, ws=ws, time=time_stamps,
@@ -65,20 +72,10 @@ def animate_flowmap_hardcoded_axes_time_series(series_data, turbine, farm_width=
         print(f'{len(chunks)} chunks defined')
         shift_distances = []
         shift_directions = []
-        # generate initial farm map and extract x/ylims
-        # flow_map = immobile_time_sim_results.flow_map(ws=7, wd=primary_heading)
-        # frame1 = flow_map.plot_wake_map(plot_colorbar=False)
-        # plt.savefig(f"{out_dir}/0.png")
-        # frames = np.append(frames, f'{out_dir}/0.png')
-        # left, right = plt.xlim()
-        # left -= 1000
-        # bot, top = plt.ylim()
-        # top += 400
-        left, right, bot, top = -2000, 8000, 0, 12000
         hour = 0
         for i, chunk in enumerate(
-                chunks): # this could be time/computation expensive, consider switching to indexed instead of time-stamp search
-            test = chunk[0]
+                chunks):  # this could be time/computation expensive, consider switching to indexed instead of time-stamp search
+            test1 = chunk[0]
             test2 = np.where(time_stamps == chunk[0])
             start_index = np.where(time_stamps == chunk[0])[0][0]
             end_index = start_index + chunk_lengths[i]
@@ -99,20 +96,19 @@ def animate_flowmap_hardcoded_axes_time_series(series_data, turbine, farm_width=
                 shift_distances.append(shift[shift_index])
                 shift_directions.append(chunk_wd[0])
             for j, time in enumerate(chunk):
-                fig = plt.figure()
                 hour += 1
                 print(f'generating hour {hour}')
                 # generate flowmaps
                 mobile_time_sim_results = wf_model(initial_farm.wt_x, initial_farm.wt_y, wd=chunk_wd[j], ws=chunk_ws[j],
                                                    time=chunk_times[j], TI=0.1)
                 flow_map = mobile_time_sim_results.flow_map(ws=chunk_ws[j], wd=chunk_wd[j])
-                frame = flow_map.plot_wake_map(plot_colorbar=False)
+                frame = flow_map.plot_wake_map(plot_colorbar=False, levels=100)
                 # add consistent labelling and axes limits to flowmaps
                 plt.xlabel('x [m]')
                 plt.ylabel('y [m]')
-                plt.title(f'Wake Map for over a time-series, position {i}, hour {hour} of {len(time_stamps)}')
-                plt.xlim((left, right))
-                plt.ylim((bot, top))
+                plt.xlim(-5000, 6500)
+                plt.ylim(1500, 8000)
+                plt.title(f'Wake Map for a time-series, position {i}, hour {hour} of {len(time_stamps)}')
                 # save flowmaps
                 plt.savefig(f"{out_dir}/{hour}.png")
                 frames = np.append(frames, f'{out_dir}/{hour}.png')
@@ -137,10 +133,9 @@ def main():
     wt = NREL15()
     dia = wt.diameter()
     chile_series = read_vortex("WindData/Chile/758955.6m_100m_UTC_04.0_ERA5.txt", outname='Chile')
-    chile_short = np.array(chile_series[0:3]).T[0:25].T.tolist()
-    chile_short.append([chile_series[3]])
-    chile_short = np.array(chile_short, dtype="object")
-    animate_flowmap_hardcoded_axes_time_series(chile_short, wt, mobile=True, out_dir='Chile_hardcoded_axes', out_name='animation', lookup_table='chile5x5_lookup.csv', dir_sensitivity=1, windrose=True)
+    horns_rev_series = read_vortex("WindData/HornsRev/761517.6m_100m_UTC+02.0_ERA5.txt", outname='HornsRev')
+
+    animate_flowmap_hardcoded_axes_time_series(horns_rev_series, wt, mobile=True, out_dir='hardcoded plots3', out_name='animation', lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=1, windrose=True, start=8, end=12)
 
 
 if __name__ == '__main__':
