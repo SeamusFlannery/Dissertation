@@ -349,17 +349,23 @@ def main():
 
     # READ IN VORTEX DATA, CREATE NOISY VERSIONS (Vortex data 0.85 R^2 hourly data -> 2% ws uncertainty)
     chile_series = read_vortex("WindData/Chile/758955.6m_100m_UTC_04.0_ERA5.txt", outname='Chile')
+    chile_site = SiteFromSeries(chile_series, plot=True)
     # chile_noise = add_noise(chile_series, ws_uncert)
-    horns_rev_series = read_vortex("WindData/HornsRev/761517.6m_100m_UTC+02.0_ERA5.txt", outname='HornsRev')
+    horns_rev_series = read_vortex("WindData/HornsRev/761517.6m_100m_UTC+02.0_ERA5.txt", outname='Horns Rev')
+    horns_rev_site = SiteFromSeries(horns_rev_series, plot=True)
     # horns_rev_noise = add_noise(horns_rev_series, ws_uncert)
     horns_rev_short = read_vortex("WindData/HornsRev/761517.6m_100m_UTC+02.0_ERA5_short.txt", outname='HornsRevShort')
-    # taiwan_series = read_vortex("WindData/Taiwan/764811.6m_100m_UTC+08.0_ERA5.txt", outname="Taiwan")
+    taiwan_series = read_vortex("WindData/Taiwan/764811.6m_100m_UTC+08.0_ERA5.txt", outname="Taiwan")
+    taiwan_site = SiteFromSeries(taiwan_series, plot=True)
     # taiwan_noise = add_noise(taiwan_series, ws_uncert)
-    # nz_series = read_vortex("WindData/New_Zealand/764813.6m_100m_UTC+12.0_ERA5.txt", outname="New Zealand")
+    nz_series = read_vortex("WindData/New_Zealand/764813.6m_100m_UTC+12.0_ERA5.txt", outname="New Zealand")
+    nz_site = SiteFromSeries(nz_series, plot=True)
     # nz_noise = add_noise(nz_series, ws_uncert)
-    # cali_series = read_vortex('WindData/California/764815.6m_100m_UTC-07.0_ERA5.txt', outname="California")
+    cali_series = read_vortex('WindData/California/764815.6m_100m_UTC-07.0_ERA5.txt', outname="California")
+    cali_site = SiteFromSeries(cali_series, plot=True)
     # cali_noise = add_noise(cali_series, ws_uncert)
-    # maine_series = read_vortex("WindData/Maine/771051.6m100mUTC-03.0ERA5_FULLYEAR_EDIT.txt", outname='Maine')
+    maine_series = read_vortex("WindData/Maine/771051.6m100mUTC-03.0ERA5_FULLYEAR_EDIT.txt", outname='Maine')
+    maine_site = SiteFromSeries(maine_series, plot=True)
     # maine_noise = add_noise(maine_series, ws_uncert)
 
     # RUN SITES
@@ -422,13 +428,9 @@ def main():
     #                             lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=1, windrose=True)
     # animate_flowmap_time_series(horns_rev_series, wt, mobile=True, out_dir='horns_rev_animation90', out_name='animation',
     #                             lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=90, windrose=True)
-    animate_flowmap_time_series(horns_rev_series, wt, mobile=True, out_dir='horns_rev_animation40',
-                                out_name='animation',
-                                lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=40, windrose=True)
-    animate_flowmap_time_series(chile_series, wt, mobile=True, out_dir='chile_animation1', out_name='animation',
-                                lookup_table='chile5x5_lookup.csv', dir_sensitivity=1, windrose=True)
-    animate_flowmap_time_series(chile_series, wt, mobile=True, out_dir='chile_animation90', out_name='animation',
-                                lookup_table='chile5x5_lookup.csv', dir_sensitivity=90, windrose=True)
+    # animate_flowmap_time_series(horns_rev_series, wt, mobile=True, out_dir='horns_rev_animation40', out_name='animation', lookup_table='hornsrev5x5_lookup.csv', dir_sensitivity=40, windrose=True)
+    # animate_flowmap_time_series(chile_series, wt, mobile=True, out_dir='chile_animation1', out_name='animation', lookup_table='chile5x5_lookup.csv', dir_sensitivity=1, windrose=True)
+    # animate_flowmap_time_series(chile_series, wt, mobile=True, out_dir='chile_animation90', out_name='animation', lookup_table='chile5x5_lookup.csv', dir_sensitivity=90, windrose=True)
 
     # chunks, chunk_lengths = time_chunk(series_data, 24*7, mode='no freq')
     # plt.hist(chunk_lengths, np.linspace(0, max(chunk_lengths), 100))

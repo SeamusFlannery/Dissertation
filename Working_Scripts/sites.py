@@ -66,7 +66,9 @@ class SiteFromSeries(UniformWeibullSite):
         UniformWeibullSite.__init__(self, f / np.sum(f), a, k, ti=ti, shear=shear)
         if plot:
             print([f, a, k])
-            self.plot_wd_distribution(n_wd=12, ws_bins=[0, 5, 10, 15, 20, 25])
+            fig = plt.figure(figsize=(8, 5))
+            self.plot_wd_distribution(n_wd=24, ws_bins=[0, 5, 10, 15, 20, 25], ax=fig)
+            plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
             plt.title(f'{outname} Site Wind Rose')
             plt.show()
 
