@@ -1,5 +1,8 @@
+# Written by Seamus Flannery, this file exists to help me pick and create nicer version of plots and
+# animations for use in the thesis write up, while there are some neat quality of life additions in here
+# like time series trimming, none of this is central to the operation of simulations. Some of these code
+# features might be included in future versions of the dynamic simulation methods.
 import os
-
 import imageio
 import numpy as np
 from matplotlib import pyplot as plt

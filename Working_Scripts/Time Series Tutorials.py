@@ -1,3 +1,5 @@
+# this file written by PyWake devs and then copied and maybe editted by Seamus Flannery while trying to
+# learn how to use PyWake.
 # load a time series of wd, ws and ti
 import numpy as np
 import matplotlib.pyplot as plt

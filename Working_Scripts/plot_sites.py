@@ -1,21 +1,19 @@
-from py_wake.site import XRSite
-from py_wake.site.shear import PowerShear
-import xarray as xr
-import numpy as np
+# This file written by Seamus Flannery - basically just a working file to get a grasp on all the different
+# parts of PyWake. Nothing in here is independantly important to the thesis experiment that isn't replicated in
+# one of the core .py files. Can be considered a tutorial file.
 import matplotlib.pyplot as plt
-from py_wake import NOJ
-from Stationholding import MySite, V80, simple_farm
+from turbines import V80
+from Stationholding import simple_farm_maker
+from sites import MyBiSite
 from North_Wind import NorthMySite
-from py_wake.utils import weibull
-from numpy import newaxis as na
 from py_wake.wind_farm_models import All2AllIterative
 from py_wake import deficit_models as dm
-# help call for info on the model
-# help(All2AllIterative.__init__)
+
 
 # here we import the turbine, site and wake deficit model to use.
 windTurbines = V80()
-Sim = All2AllIterative(MySite(), windTurbines, wake_deficitModel=dm.NOJDeficit())
+Sim = All2AllIterative(MyBiSite(), windTurbines, wake_deficitModel=dm.NOJDeficit())
+simple_farm = simple_farm_maker()
 wt_x, wt_y = simple_farm.wt_x, simple_farm.wt_y
 # run the simulation for Annual Energy Production (AEP)
 simulationResult = Sim(wt_x, wt_y)

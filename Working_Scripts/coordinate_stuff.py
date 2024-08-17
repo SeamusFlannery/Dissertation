@@ -1,3 +1,7 @@
+# written by Seamus Flannery
+# this file was written to turn farm objects output by my simulation scripts into lists of coordinates in UTM
+# which could then be used by Velosco software. These were used to determine shift displacements in meters from
+# original siting layouts, which was then used for costing mooring line and cables.
 import pyproj
 import numpy as np
 

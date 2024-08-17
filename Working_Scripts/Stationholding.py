@@ -1,4 +1,7 @@
-# my main working file for testing my methods that use weibull site data and calculating possible relocation upsides
+# This file written by Seamus Flannery
+# my main file for testing my methods that use weibull site data and calculating possible relocation upsides
+# This runs full support for static farms, and has flexible layout optimization methods
+# which can be used for dynamic farm simulation in TimeSeriesSim.py
 import random
 from py_wake import np
 from matplotlib import pyplot as plt
@@ -10,6 +13,7 @@ from turbines import V80, NREL15
 from sites import read_vortex
 
 
+# data structure for turbines to hold position and facilitate position changes
 class Turbine_instance:
     def __init__(self, x, y):
         self.origin_x = x
@@ -29,6 +33,8 @@ class Turbine_instance:
         self.pos = [x, y]
 
 
+# data structure to organize groups of turbines into farm layouts with easily accessible movement methods and
+# coordinate lists to hand to PyWake
 class WindFarm:
     def __init__(self, turbine_list, heading=0):
         self.turbines = turbine_list
@@ -55,6 +61,7 @@ class WindFarm:
             self.wt_x[i], self.wt_y[i] = turbine.pos
 
 
+# method to plot the power and ct curve of turbine - used diagnostically, not in simulation
 def plot_p_ct():
     wt = V80()
     ws = np.linspace(3, 20, 100)
@@ -69,6 +76,7 @@ def plot_p_ct():
     plt.show()
 
 
+# deprecated method to generate a hard-coded test farm
 def simple_farm_maker():
     t_1 = Turbine_instance(0, 1000)
     t_2 = Turbine_instance(500, 1000)
@@ -84,6 +92,8 @@ def simple_farm_maker():
     return simple_farm
 
 
+# flexible method for generating rectilinear farm layouts that take a heading and a shift
+# (basically can create any parallelogram)
 def generate_layout(y, y_spacing, x, x_spacing, shift=0, heading_deg=0):
     layout = np.empty([y, x], list)
     for i in range(y):
@@ -109,6 +119,7 @@ def generate_layout(y, y_spacing, x, x_spacing, shift=0, heading_deg=0):
     return turbine_list
 
 
+# deprecated initial test method for a dynamic farm that moved turbines at random - only losses for AEP haha
 def test_random(farm, turbine, rad_range=1000, iterations=100, granularity=10, plot=False):
     radius_list = np.linspace(0, rad_range, int(rad_range / granularity + 1))
     Sim = PropagateDownwind(MyTriSite(), turbine, wake_deficitModel=dm.NOJDeficit())
@@ -147,6 +158,9 @@ def test_random(farm, turbine, rad_range=1000, iterations=100, granularity=10, p
     plt.show()
 
 
+# this takes a farm and measures its AEP for a given wind heading at a bunch of shift values, which creates
+# an optimization curve. The max of that curve is returned as opt_shift and can be used to determine an optimal
+# static farm or fill values in a 360 degree lookup table for a dynamic farm.
 def test_perp_slide(site, farm, turbine, slide_start, slide_end, granularity=50, plot=True,
                     flow_plot=False, time_series_dir='', wd=''):
     farm_heading = farm.heading
@@ -192,7 +206,7 @@ def test_perp_slide(site, farm, turbine, slide_start, slide_end, granularity=50,
     return max_aep, opt_shift, steps
 
 
-# attempt to get higher res data around extrema with less computation - runge-kutta 4th?
+# NOW DEPRECATED attempt to get higher res data around extrema with less computation - runge-kutta 4th order?
 def efficient_perp_slide(site, farm, turbine, wind_direction=0, slide_range=100, plot=True, flow_plot=False):
     farm_heading = farm.heading
     radius = 0
@@ -232,7 +246,8 @@ def efficient_perp_slide(site, farm, turbine, wind_direction=0, slide_range=100,
 
 
 # generates a farm with 0 shift, output will give shift value to optimize that layout for a given wind condition
-# takes spacing in multiples of turbine Diameter
+# takes spacing in multiples of turbine Diameter. Overlaps significantly in function with test_perp_slide but is a
+# little simpler to use. This also returns the shifted farm for future use.
 def find_opt_shift(site, turbine, farm_width, farm_length, width_spacing, length_spacing, heading_deg=0, plot=False):
     dia = turbine.diameter()
     hub = turbine.hub_height()
@@ -248,6 +263,9 @@ def find_opt_shift(site, turbine, farm_width, farm_length, width_spacing, length
     return max_aep, opt_shift, opt_farm
 
 
+# NOT USED - some ideas from this got incorporated into the dynamic farm simulation but this was before
+# I decided it needed to be a time-series function (I had initially thought that PyWake would adequately tell me
+# about dynamic farms with statistical data rather than a direct time series; this was incorrect)
 # the goal of this function would be to optimize a farm based on a simple site, then run it against a more complex
 # site to see if there's an AEP upside to the perpendicular slide from the already optimized shift
 # if I figure out the right metrics, I could possibly try to then subtract the simple site from the complex site
@@ -266,7 +284,7 @@ def trifurcate_upside(simple_site, complex_site, turbine, farm_width, farm_lengt
     return upside, approx_shift
 
 
-
+# working/testing main function
 def main():
     # test_perp_slide(TenFarm, wt, slide_range=200, granularity=10)
     wt = NREL15()
@@ -289,9 +307,10 @@ def main():
     # test_perp_slide(RotTenFarm, wt, slide_range=100, granularity=10, plot=True)
     # plot_p_ct()
 
-
+# ignore this (clearly trifurcated sites were never found on vortex, and this would need to be a dynamic sim anyway)
 # TODO write a new function that automatically optimizes the initial farm slide according to bifurcated wind,
 # TODO and then tests in trifurcated wind
+
 
 if __name__ == '__main__':
     main()

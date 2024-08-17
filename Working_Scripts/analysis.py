@@ -1,6 +1,12 @@
+# this file written by Seamus Flannery
+# this file was designed to give me a space to do some statistical analysis/uncertainty analysis on my initial results
+# for dynamic farms, without cluttering my main dynamic farm file "TimeSeriesSim.py"
 from TimeSeriesSim import *
 
 
+# essentially a hardcoded main to probe my results using the uncertainty from Vortex validation docs.
+# Compares the AEP uplift in the normal dynamic farm to one with 2% elevated wind speeds and outputs these
+# AEPs and the uplifts %'s so I can put them into excel and plot error bars.
 def analysis_procedure():
     wt = NREL15()
     dia = wt.diameter()

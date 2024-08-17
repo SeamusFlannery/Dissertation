@@ -1,9 +1,10 @@
-# animation files were too large to easily share, git, or display, so I built this to go and make any gifs into mp4s I could use instead
+# Written by Seamus Flannery, with help from stack exchange. Not a core file
+# animation files were too large to easily share, git, or display, so I built this to go and make
+# any gifs into mp4s I could use instead
 
 
 import moviepy.editor as mp
 import os
-
 
 
 def make_mp4(path, path_no_ext):

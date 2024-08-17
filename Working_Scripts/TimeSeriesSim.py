@@ -1,3 +1,6 @@
+# This file is written by Seamus Flannery. The purpose of this file is to put together all the other pieces in this
+# package to make the time series simulation run properly. It also contains the base code for animating farms, and
+# some basic analysis work as well.
 import numpy as np
 import matplotlib.pyplot as plt
 from Stationholding import generate_layout, WindFarm, Turbine_instance, find_opt_shift, test_perp_slide
@@ -62,6 +65,7 @@ def time_chunk(series_data, max_freq, dir_sensitivity=20, mode='freq'):
         return chunks, chunk_lengths
 
 
+# NOW DEPRICATED version of the time series simulation
 def sim_time_series(series_data, turbine, farm_width=5, farm_length=5, width_spacing=5, length_spacing=7, plot=False,
                     fast=''):
     # start by analyzing the input time_series
@@ -132,7 +136,11 @@ def sim_time_series(series_data, turbine, farm_width=5, farm_length=5, width_spa
     return upside, upside_percent
 
 
-# virtually a copy of sim_time_series but incorporates the generation/usage of a lookup table for the given initial farm/site combination
+# virtually a copy of sim_time_series but incorporates the generation/usage of a lookup table for the given
+# initial farm/site combination. This has been the version in use since 7/2024, so most updates and stable edits
+# are on this version. Takes a time series, turbine model, and optionally: farm layout details, lookuptable input details
+# direction sensitivity and/or frequency inputs, and outputs an AEP gain, the percent of AEP that gain represents,
+# the control static farm, and the dynamic test farm data structures.
 def sim_time_series_lookup(series_data, turbine, farm_width=5, farm_length=5, width_spacing=5, length_spacing=7,
                            plot=False, fast='', lookup_file='', chunk_freq=20, chunk_sensitivity=20):
     # start by analyzing the input time_series
@@ -215,6 +223,8 @@ def sim_time_series_lookup(series_data, turbine, farm_width=5, farm_length=5, wi
     return upside, upside_percent, initial_farm, extreme_farm
 
 
+# This function does essentially the same thing as the simulator but instead of returning an AEP it outputs wake
+# maps and then stitches them together into an animation of the turbines moving as the wind shifts
 def animate_flowmap_time_series(series_data, turbine, farm_width=5, farm_length=5, width_spacing=5, length_spacing=7,
                                 mobile=False, out_dir='animation', out_name='animation', lookup_table='',
                                 dir_sensitivity=10, windrose=False):
@@ -330,6 +340,7 @@ def animate_flowmap_time_series(series_data, turbine, farm_width=5, farm_length=
     return None
 
 
+# used for uncertainty tests, this adds noise to a time series signal, which can then be re-simulated
 def add_noise(series_data, ws_uncert):
     ws = series_data[1]
     # noise = np.random.normal(noise_mean, noise_stdv, len(ws))
@@ -338,6 +349,9 @@ def add_noise(series_data, ws_uncert):
     return series_data
 
 
+# a main function where I put all my running code. This can be commented or uncommented in order to get desired outputs
+# and serves as decent example code you could use, though many single objective calls are mixed throughout, rather than
+# any intentional tutorial being put here, as this is my working code.
 def main():
     wt = NREL15()
     dia = wt.diameter()

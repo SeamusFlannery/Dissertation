@@ -1,4 +1,5 @@
-# Using this document to store the data arrays for my power curves and ct_curves
+# Using this document to store the data arrays for my power curves and ct_curves for the V80
+# and NREL 15MW turbine
 import numpy as np
 
 # power as listed in units of kW and should be in units of Watts to hand to PyWake, so multiply by 1000

@@ -1,3 +1,4 @@
+# The third pywake tutorial I attempted that was about site class objects.
 # I THINK this is the data class that allows for fully custom sites
 from py_wake.site import XRSite
 from py_wake.site.shear import PowerShear

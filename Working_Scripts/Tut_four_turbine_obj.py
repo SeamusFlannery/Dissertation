@@ -1,4 +1,4 @@
-import os
+# a tutorial file I worked in provided by the PyWake developers in the documentation
 import numpy as np
 import matplotlib.pyplot as plt
 from py_wake.wind_turbines import WindTurbine, WindTurbines
